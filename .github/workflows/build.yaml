@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build, Test, and Commit
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build:
+  build-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,3 +29,18 @@ jobs:
 
     - name: Run tests
       run: npm test
+
+    - name: Commit built files
+      if: success()  # Only commit if the previous steps were successful
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add lib
+        git commit -m "Add built files" || echo "No changes to commit"
+
+    - name: Push changes
+      if: success()  # Only push if the previous steps were successful
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      run: |
+        git push origin main
