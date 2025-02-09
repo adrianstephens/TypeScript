@@ -30,17 +30,8 @@ jobs:
       - name: Run LKG build
         run: npx hereby LKG
 
-      - name: Commit built files
-        if: success() # Only commit if the previous steps were successful
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add lib
-          git commit -m "Add built files" || echo "No changes to commit"
-
-      - name: Push changes
-        if: success() # Only push if the previous steps were successful
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          git push origin main
+      - name: Publish to npm
+          if: success()  # Only publish if the previous steps were successful
+          run: |
+            npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+            npm publish --access public
