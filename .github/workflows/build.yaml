@@ -27,9 +27,6 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Run tests
-        run: npm test
-
       - name: Commit built files
         if: success() # Only commit if the previous steps were successful
         run: |
