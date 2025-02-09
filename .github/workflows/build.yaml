@@ -27,6 +27,9 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Run LKG build
+        run: npx hereby LKG
+
       - name: Commit built files
         if: success() # Only commit if the previous steps were successful
         run: |
