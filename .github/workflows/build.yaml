@@ -31,7 +31,7 @@ jobs:
         run: npx hereby LKG
 
       - name: Publish to npm
-          if: success()  # Only publish if the previous steps were successful
-          run: |
-            npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-            npm publish --access public
+        if: success() # Only publish if the previous steps were successful
+        run: |
+          npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+          npm publish --access public
