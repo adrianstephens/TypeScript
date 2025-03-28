@@ -66,6 +66,7 @@ import {
     Decorator,
     DefaultClause,
     DeleteExpression,
+    DifferenceTypeNode,
     DoStatement,
     DotDotDotToken,
     ElementAccessChain,
@@ -602,6 +603,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
         updateUnionTypeNode,
         createIntersectionTypeNode,
         updateIntersectionTypeNode,
+        createDifferenceTypeNode,
+        updateDifferenceTypeNode,
         createConditionalTypeNode,
         updateConditionalTypeNode,
         createInferTypeNode,
@@ -2541,8 +2544,8 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
             : node;
     }
 
-    function createUnionOrIntersectionTypeNode(kind: SyntaxKind.UnionType | SyntaxKind.IntersectionType, types: readonly TypeNode[], parenthesize: (nodes: readonly TypeNode[]) => readonly TypeNode[]) {
-        const node = createBaseNode<UnionTypeNode | IntersectionTypeNode>(kind);
+    function createUnionOrIntersectionTypeNode(kind: SyntaxKind.UnionType | SyntaxKind.IntersectionType | SyntaxKind.DifferenceType, types: readonly TypeNode[], parenthesize: (nodes: readonly TypeNode[]) => readonly TypeNode[]) {
+        const node = createBaseNode<UnionTypeNode | IntersectionTypeNode | DifferenceTypeNode>(kind);
         node.types = factory.createNodeArray(parenthesize(types));
         node.transformFlags = TransformFlags.ContainsTypeScript;
         return node;
@@ -2572,6 +2575,16 @@ export function createNodeFactory(flags: NodeFactoryFlags, baseFactory: BaseNode
     // @api
     function updateIntersectionTypeNode(node: IntersectionTypeNode, types: NodeArray<TypeNode>) {
         return updateUnionOrIntersectionTypeNode(node, types, parenthesizerRules().parenthesizeConstituentTypesOfIntersectionType);
+    }
+
+    // @api
+    function createDifferenceTypeNode(types: readonly TypeNode[]): DifferenceTypeNode {
+        return createUnionOrIntersectionTypeNode(SyntaxKind.DifferenceType, types, parenthesizerRules().parenthesizeConstituentTypesOfDifferenceType) as DifferenceTypeNode;
+    }
+
+    // @api
+    function updateDifferenceTypeNode(node: DifferenceTypeNode, types: NodeArray<TypeNode>) {
+        return updateUnionOrIntersectionTypeNode(node, types, parenthesizerRules().parenthesizeConstituentTypesOfDifferenceType);
     }
 
     // @api

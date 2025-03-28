@@ -875,6 +875,13 @@ const visitEachChildTable: VisitEachChildTable = {
         );
     },
 
+    [SyntaxKind.DifferenceType]: function visitEachChildOfIntersectionTypeNode(node, visitor, context, nodesVisitor, _nodeVisitor, _tokenVisitor) {
+        return context.factory.updateDifferenceTypeNode(
+            node,
+            nodesVisitor(node.types, visitor, isTypeNode),
+        );
+    },
+
     [SyntaxKind.ConditionalType]: function visitEachChildOfConditionalTypeNode(node, visitor, context, _nodesVisitor, nodeVisitor, _tokenVisitor) {
         return context.factory.updateConditionalTypeNode(
             node,

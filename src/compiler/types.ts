@@ -258,6 +258,7 @@ export const enum SyntaxKind {
     RestType,
     UnionType,
     IntersectionType,
+    DifferenceType,
     ConditionalType,
     InferType,
     ParenthesizedType,
@@ -710,6 +711,7 @@ export type TypeNodeSyntaxKind =
     | SyntaxKind.RestType
     | SyntaxKind.UnionType
     | SyntaxKind.IntersectionType
+    | SyntaxKind.DifferenceType
     | SyntaxKind.ConditionalType
     | SyntaxKind.InferType
     | SyntaxKind.ParenthesizedType
@@ -1084,6 +1086,7 @@ export type HasChildren =
     | RestTypeNode
     | UnionTypeNode
     | IntersectionTypeNode
+    | DifferenceTypeNode
     | ConditionalTypeNode
     | InferTypeNode
     | ImportTypeNode
@@ -2292,7 +2295,7 @@ export interface RestTypeNode extends TypeNode {
     readonly type: TypeNode;
 }
 
-export type UnionOrIntersectionTypeNode = UnionTypeNode | IntersectionTypeNode;
+export type UnionOrIntersectionTypeNode = UnionTypeNode | IntersectionTypeNode | DifferenceTypeNode;
 
 export interface UnionTypeNode extends TypeNode {
     readonly kind: SyntaxKind.UnionType;
@@ -2301,6 +2304,11 @@ export interface UnionTypeNode extends TypeNode {
 
 export interface IntersectionTypeNode extends TypeNode {
     readonly kind: SyntaxKind.IntersectionType;
+    readonly types: NodeArray<TypeNode>;
+}
+
+export interface DifferenceTypeNode extends TypeNode {
+    readonly kind: SyntaxKind.DifferenceType;
     readonly types: NodeArray<TypeNode>;
 }
 
@@ -6696,8 +6704,13 @@ export interface IntersectionType extends UnionOrIntersectionType {
     /** @internal */
     uniqueLiteralFilledInstantiation?: Type; // Instantiation with type parameters mapped to never type
 }
-
-export type StructuredType = ObjectType | UnionType | IntersectionType;
+export interface DifferenceType extends UnionOrIntersectionType {
+    /** @internal */
+    resolvedApparentType: Type;
+    /** @internal */
+    uniqueLiteralFilledInstantiation?: Type; // Instantiation with type parameters mapped to never type
+}
+export type StructuredType = ObjectType | UnionType | IntersectionType | DifferenceType;
 
 /** @internal */
 // An instantiated anonymous type has a target and a mapper
@@ -8631,6 +8644,8 @@ export interface ParenthesizerRules {
     parenthesizeConstituentTypesOfUnionType(constituents: readonly TypeNode[]): NodeArray<TypeNode>;
     parenthesizeConstituentTypeOfIntersectionType(type: TypeNode): TypeNode;
     parenthesizeConstituentTypesOfIntersectionType(constituents: readonly TypeNode[]): NodeArray<TypeNode>;
+    parenthesizeConstituentTypeOfDifferenceType(type: TypeNode): TypeNode;
+    parenthesizeConstituentTypesOfDifferenceType(constituents: readonly TypeNode[]): NodeArray<TypeNode>;
     parenthesizeLeadingTypeArgument(typeNode: TypeNode): TypeNode;
     parenthesizeTypeArguments(typeParameters: readonly TypeNode[] | undefined): NodeArray<TypeNode> | undefined;
 }
@@ -8835,6 +8850,8 @@ export interface NodeFactory {
     updateUnionTypeNode(node: UnionTypeNode, types: NodeArray<TypeNode>): UnionTypeNode;
     createIntersectionTypeNode(types: readonly TypeNode[]): IntersectionTypeNode;
     updateIntersectionTypeNode(node: IntersectionTypeNode, types: NodeArray<TypeNode>): IntersectionTypeNode;
+    createDifferenceTypeNode(types: readonly TypeNode[]): DifferenceTypeNode;
+    updateDifferenceTypeNode(node: DifferenceTypeNode, types: NodeArray<TypeNode>): DifferenceTypeNode;
     createConditionalTypeNode(checkType: TypeNode, extendsType: TypeNode, trueType: TypeNode, falseType: TypeNode): ConditionalTypeNode;
     updateConditionalTypeNode(node: ConditionalTypeNode, checkType: TypeNode, extendsType: TypeNode, trueType: TypeNode, falseType: TypeNode): ConditionalTypeNode;
     createInferTypeNode(typeParameter: TypeParameterDeclaration): InferTypeNode;
@@ -10046,9 +10063,10 @@ export const enum ListFormat {
     NotDelimited = 0,               // There is no delimiter between list items (default).
     BarDelimited = 1 << 2,          // Each list item is space-and-bar (" |") delimited.
     AmpersandDelimited = 1 << 3,    // Each list item is space-and-ampersand (" &") delimited.
+    MinusDelimited = 1 << 22,
     CommaDelimited = 1 << 4,        // Each list item is comma (",") delimited.
     AsteriskDelimited = 1 << 5,     // Each list item is asterisk ("\n *") delimited, used with JSDoc.
-    DelimitersMask = BarDelimited | AmpersandDelimited | CommaDelimited | AsteriskDelimited,
+    DelimitersMask = BarDelimited | AmpersandDelimited | CommaDelimited | AsteriskDelimited | MinusDelimited,
 
     AllowTrailingComma = 1 << 6,    // Write a trailing comma (",") if present.
 
@@ -10086,6 +10104,7 @@ export const enum ListFormat {
     MultiLineTupleTypeElements = CommaDelimited | Indented | SpaceBetweenSiblings | MultiLine,
     UnionTypeConstituents = BarDelimited | SpaceBetweenSiblings | SingleLine,
     IntersectionTypeConstituents = AmpersandDelimited | SpaceBetweenSiblings | SingleLine,
+    DifferenceTypeConstituents = MinusDelimited | SpaceBetweenSiblings | SingleLine,
     ObjectBindingPatternElements = SingleLine | AllowTrailingComma | SpaceBetweenBraces | CommaDelimited | SpaceBetweenSiblings | NoSpaceIfEmpty,
     ArrayBindingPatternElements = SingleLine | AllowTrailingComma | CommaDelimited | SpaceBetweenSiblings | NoSpaceIfEmpty,
     ObjectLiteralExpressionProperties = PreserveLines | CommaDelimited | SpaceBetweenSiblings | SpaceBetweenBraces | Indented | Braces | NoSpaceIfEmpty,

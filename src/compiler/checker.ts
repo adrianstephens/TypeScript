@@ -152,6 +152,8 @@ import {
     DiagnosticRelatedInformation,
     Diagnostics,
     DiagnosticWithLocation,
+    DifferenceType,
+    DifferenceTypeNode,
     DoStatement,
     DynamicNamedDeclaration,
     ElementAccessChain,
@@ -6620,7 +6622,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 }
                 const typeNodes = mapToTypeNodes(types, context, /*isBareList*/ true);
                 if (typeNodes && typeNodes.length > 0) {
-                    return type.flags & TypeFlags.Union ? factory.createUnionTypeNode(typeNodes) : factory.createIntersectionTypeNode(typeNodes);
+                    return type.flags & TypeFlags.Union ? (type.flags & TypeFlags.Intersection ? factory.createUnionTypeNode(typeNodes) : factory.createDifferenceTypeNode(typeNodes)) : factory.createIntersectionTypeNode(typeNodes);
                 }
                 else {
                     if (!context.encounteredError && !(context.flags & NodeBuilderFlags.AllowEmptyUnionOrIntersection)) {
@@ -14160,7 +14162,34 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             forEachMappedTypePropertyKeyTypeAndIndexSignatureKeyType(modifiersType, include, /*stringsOnly*/ false, addMemberForKeyType);
         }
         else {
-            forEachType(getLowerBoundOfKeyType(constraintType), addMemberForKeyType);
+            // We have a { [P in `${T}`]: X }
+            let lowerBound = getLowerBoundOfKeyType(constraintType);
+            if ((lowerBound.flags & TypeFlags.UnionOrIntersection) === TypeFlags.UnionOrIntersection) {
+                const literals: Record<string, Type> = {};
+                const incl: Type[] = [], excl: Type[] = [];
+                forEachType((lowerBound as DifferenceType).types[0], t => {
+                    if (t.flags & TypeFlags.Literal)
+                        literals[(t as LiteralType).value.toString()] = t;
+                    else
+                        incl.push(t);
+                });
+                forEach((lowerBound as DifferenceType).types.slice(1), t => forEachType(t, t => {
+                    if (t.flags & TypeFlags.Literal) {
+                        const name = (t as LiteralType).value.toString();
+                        if (literals[name]) {
+                            delete literals[name];
+                            return;
+                        }
+                    }
+                    excl.push(t);
+                }));
+                if (incl.length) {
+                    const diff = getDifferenceType([getUnionType(incl, UnionReduction.None), ...excl]);
+                    addMemberForKeyTypeWorker(diff, diff);
+                }
+                lowerBound = getUnionType(Object.values(literals), UnionReduction.None);
+            }
+            forEachType(lowerBound, addMemberForKeyType);
         }
         setStructuredTypeMembers(type, members, emptyArray, emptyArray, indexInfos || emptyArray);
 
@@ -18185,6 +18214,35 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         }
         return links.resolvedType;
     }
+    function createDifferenceType(include: Type, exclude: Type, objectFlags: ObjectFlags, aliasSymbol?: Symbol, aliasTypeArguments?: readonly Type[]) {
+        const result = createType(TypeFlags.Intersection|TypeFlags.Union) as DifferenceType;
+        result.objectFlags = objectFlags;// | getPropagatingFlagsOfTypes(types, /*excludeKinds*/ TypeFlags.Nullable);
+        result.types = [include, exclude];
+        result.aliasSymbol = aliasSymbol;
+        result.aliasTypeArguments = aliasTypeArguments;
+        return result;
+    }
+    
+    function getDifferenceType(types: readonly Type[], aliasSymbol?: Symbol, aliasTypeArguments?: readonly Type[]): Type {
+        if (types.length === 0) {
+            return neverType;
+        }
+        if (types.length === 1) {
+            return types[0];
+        }
+        const exclude = getUnionType(types.slice(1), UnionReduction.Literal, aliasSymbol, aliasTypeArguments);
+        const objectFlags = getObjectFlags(types[0]) & ObjectFlags.PropagatingFlags;
+        return createDifferenceType(types[0], exclude, objectFlags, aliasSymbol, aliasTypeArguments);
+    }
+
+    function getTypeFromDifferenceTypeNode(node: DifferenceTypeNode): Type {
+        const links = getNodeLinks(node);
+        if (!links.resolvedType) {
+            const aliasSymbol = getAliasSymbolForTypeNode(node);
+            links.resolvedType = getDifferenceType(map(node.types, getTypeFromTypeNode), aliasSymbol, getTypeArgumentsForAliasSymbol(aliasSymbol));
+        }
+        return links.resolvedType;
+    }
 
     function createIndexType(type: InstantiableType | UnionOrIntersectionType, indexFlags: IndexFlags) {
         const result = createType(TypeFlags.Index) as IndexType;
@@ -19829,6 +19887,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 return getTypeFromUnionTypeNode(node as UnionTypeNode);
             case SyntaxKind.IntersectionType:
                 return getTypeFromIntersectionTypeNode(node as IntersectionTypeNode);
+            case SyntaxKind.DifferenceType:
+                return getTypeFromDifferenceTypeNode(node as DifferenceTypeNode);
             case SyntaxKind.JSDocNullableType:
                 return getTypeFromJSDocNullableTypeNode(node as JSDocNullableType);
             case SyntaxKind.JSDocOptionalType:
@@ -20405,9 +20465,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             }
             const newAliasSymbol = aliasSymbol || type.aliasSymbol;
             const newAliasTypeArguments = aliasSymbol ? aliasTypeArguments : instantiateTypes(type.aliasTypeArguments, mapper);
-            return flags & TypeFlags.Intersection || origin && origin.flags & TypeFlags.Intersection ?
-                getIntersectionType(newTypes, IntersectionFlags.None, newAliasSymbol, newAliasTypeArguments) :
-                getUnionType(newTypes, UnionReduction.Literal, newAliasSymbol, newAliasTypeArguments);
+            const newFlags = origin ? origin.flags : flags;
+            return newFlags & TypeFlags.Intersection
+                ? newFlags & TypeFlags.Union
+                    ? getDifferenceType(newTypes, newAliasSymbol, newAliasTypeArguments)
+                    : getIntersectionType(newTypes, IntersectionFlags.None, newAliasSymbol, newAliasTypeArguments)
+                : getUnionType(newTypes, UnionReduction.Literal, newAliasSymbol, newAliasTypeArguments);
         }
         if (flags & TypeFlags.Index) {
             return getIndexType(instantiateType((type as IndexType).type, mapper));
@@ -22378,7 +22441,28 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             // Note that these checks are specifically ordered to produce correct results. In particular,
             // we need to deconstruct unions before intersections (because unions are always at the top),
             // and we need to handle "each" relations before "some" relations for the same kind of type.
+
+            if ((target.flags & TypeFlags.UnionOrIntersection) === TypeFlags.UnionOrIntersection) {
+                let rel = isRelatedTo(source, (target as DifferenceType).types[0], RecursionFlags.Source, /*reportErrors*/ false);
+                if (rel !== Ternary.False) {
+                    const relB = isRelatedTo(source, getUnionType((target as DifferenceType).types.slice(1)), RecursionFlags.Target, /*reportErrors*/ false);
+                    if (relB === Ternary.True)
+                        rel = Ternary.False;
+                }
+                return rel;
+            }
+
             if (source.flags & TypeFlags.Union) {
+
+                if (source.flags & TypeFlags.Intersection) {
+                    return unionOrIntersectionRelatedTo(
+                        (source as DifferenceType).types[0],
+                        getUnionType([...(source as DifferenceType).types.slice(1), target]),
+                        reportErrors,
+                        intersectionState
+                    );
+                }
+
                 if (target.flags & TypeFlags.Union) {
                     // Intersections of union types are normalized into unions of intersection types, and such normalized
                     // unions can get very large and expensive to relate. The following fast path checks if the source union
@@ -27836,6 +27920,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         const types = origin && origin.flags & TypeFlags.Union ? (origin as UnionType).types : (type as UnionType).types;
         let mappedTypes: Type[] | undefined;
         let changed = false;
+
         for (const t of types) {
             const mapped = t.flags & TypeFlags.Union ? mapType(t, mapper, noReductions) : mapper(t);
             changed ||= t !== mapped;
@@ -27848,7 +27933,11 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 }
             }
         }
-        return changed ? mappedTypes && getUnionType(mappedTypes, noReductions ? UnionReduction.None : UnionReduction.Literal) : type;
+        return changed ? mappedTypes && (
+            type.flags & TypeFlags.Intersection
+                ? getDifferenceType(mappedTypes)
+                : getUnionType(mappedTypes, noReductions ? UnionReduction.None : UnionReduction.Literal)
+         ) : type;
     }
 
     function mapTypeWithAlias(type: Type, mapper: (t: Type) => Type, aliasSymbol: Symbol | undefined, aliasTypeArguments: readonly Type[] | undefined) {

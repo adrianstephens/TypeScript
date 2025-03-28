@@ -66,6 +66,7 @@ import {
     DiagnosticMessage,
     Diagnostics,
     DiagnosticWithDetachedLocation,
+    DifferenceTypeNode,
     DoStatement,
     DotDotDotToken,
     ElementAccessExpression,
@@ -683,6 +684,7 @@ const forEachChildTable: ForEachChildTable = {
     },
     [SyntaxKind.UnionType]: forEachChildInUnionOrIntersectionType,
     [SyntaxKind.IntersectionType]: forEachChildInUnionOrIntersectionType,
+    [SyntaxKind.DifferenceType]: forEachChildInUnionOrIntersectionType,
     [SyntaxKind.ConditionalType]: function forEachChildInConditionalType<T>(node: ConditionalTypeNode, cbNode: (node: Node) => T | undefined, _cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
         return visitNode(cbNode, node.checkType) ||
             visitNode(cbNode, node.extendsType) ||
@@ -1142,7 +1144,7 @@ function forEachChildInCallOrConstructSignature<T>(node: CallSignatureDeclaratio
         visitNode(cbNode, node.type);
 }
 
-function forEachChildInUnionOrIntersectionType<T>(node: UnionTypeNode | IntersectionTypeNode, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
+function forEachChildInUnionOrIntersectionType<T>(node: UnionOrIntersectionTypeNode, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined {
     return visitNodes(cbNode, cbNodes, node.types);
 }
 
@@ -4815,7 +4817,7 @@ namespace Parser {
     }
 
     function parseUnionOrIntersectionType(
-        operator: SyntaxKind.BarToken | SyntaxKind.AmpersandToken,
+        operator: SyntaxKind.BarToken | SyntaxKind.AmpersandToken | SyntaxKind.MinusToken,
         parseConstituentType: () => TypeNode,
         createTypeNode: (types: NodeArray<TypeNode>) => UnionOrIntersectionTypeNode,
     ): TypeNode {
@@ -4834,8 +4836,12 @@ namespace Parser {
         return type;
     }
 
+    function parseDifferenceTypeOrHigher(): TypeNode {
+        return parseUnionOrIntersectionType(SyntaxKind.MinusToken, parseTypeOperatorOrHigher, factory.createDifferenceTypeNode);
+    }
+
     function parseIntersectionTypeOrHigher(): TypeNode {
-        return parseUnionOrIntersectionType(SyntaxKind.AmpersandToken, parseTypeOperatorOrHigher, factory.createIntersectionTypeNode);
+        return parseUnionOrIntersectionType(SyntaxKind.AmpersandToken, parseDifferenceTypeOrHigher, factory.createIntersectionTypeNode);
     }
 
     function parseUnionTypeOrHigher(): TypeNode {

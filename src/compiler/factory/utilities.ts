@@ -831,7 +831,7 @@ function tryRenameInternalModule(factory: NodeFactory, moduleName: LiteralExpres
     if (options.rewriteImports) {
         const cache = host.getModuleResolutionCache?.();
         const resolvedModule = resolveModuleName(moduleName.text, sourceFile.fileName, options, host as ModuleResolutionHost, cache);
-        if (resolvedModule.resolvedModule && !resolvedModule.resolvedModule.resolvedFileName.includes("/node_modules/")) {
+        if (resolvedModule.resolvedModule && !resolvedModule.resolvedModule.isExternalLibraryImport) {//}  !resolvedModule.resolvedModule.resolvedFileName.includes("/node_modules/")) {
             const relative = getRelativePathFromFile(sourceFile.fileName, resolvedModule.resolvedModule.resolvedFileName, host.getCanonicalFileName);
             const updated = changeExtension(relative, getOutputExtension(relative, options));
 

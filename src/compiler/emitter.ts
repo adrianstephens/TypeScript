@@ -60,6 +60,7 @@ import {
     Decorator,
     DefaultClause,
     DeleteExpression,
+    DifferenceTypeNode,
     directorySeparator,
     DoStatement,
     DotToken,
@@ -1629,6 +1630,8 @@ export function createPrinter(printerOptions: PrinterOptions = {}, handlers: Pri
                     return emitUnionType(node as UnionTypeNode);
                 case SyntaxKind.IntersectionType:
                     return emitIntersectionType(node as IntersectionTypeNode);
+                case SyntaxKind.DifferenceType:
+                    return emitDifferenceType(node as DifferenceTypeNode);
                 case SyntaxKind.ConditionalType:
                     return emitConditionalType(node as ConditionalTypeNode);
                 case SyntaxKind.InferType:
@@ -2431,6 +2434,10 @@ export function createPrinter(printerOptions: PrinterOptions = {}, handlers: Pri
     function emitIntersectionType(node: IntersectionTypeNode) {
         emitList(node, node.types, ListFormat.IntersectionTypeConstituents, parenthesizer.parenthesizeConstituentTypeOfIntersectionType);
     }
+    function emitDifferenceType(node: DifferenceTypeNode) {
+        emitList(node, node.types, ListFormat.DifferenceTypeConstituents, parenthesizer.parenthesizeConstituentTypeOfDifferenceType);
+    }
+    
 
     function emitConditionalType(node: ConditionalTypeNode) {
         emit(node.checkType, parenthesizer.parenthesizeCheckTypeOfConditionalType);
@@ -4643,7 +4650,11 @@ export function createPrinter(printerOptions: PrinterOptions = {}, handlers: Pri
                 writeSpace();
                 writePunctuation("&");
                 break;
-        }
+            case ListFormat.MinusDelimited:
+                writeSpace();
+                writePunctuation("-");
+                break;
+            }
     }
 
     function emitList<Child extends Node, Children extends NodeArray<Child>>(parentNode: Node | undefined, children: Children | undefined, format: ListFormat, parenthesizerRule?: ParenthesizerRuleOrSelector<Child>, start?: number, count?: number) {

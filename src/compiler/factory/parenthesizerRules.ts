@@ -82,6 +82,8 @@ export function createParenthesizerRules(factory: NodeFactory): ParenthesizerRul
         parenthesizeConstituentTypeOfUnionType,
         parenthesizeConstituentTypesOfIntersectionType,
         parenthesizeConstituentTypeOfIntersectionType,
+        parenthesizeConstituentTypesOfDifferenceType,
+        parenthesizeConstituentTypeOfDifferenceType,
         parenthesizeOperandOfTypeOperator,
         parenthesizeOperandOfReadonlyTypeOperator,
         parenthesizeNonArrayTypeOfPostfixType,
@@ -504,8 +506,8 @@ export function createParenthesizerRules(factory: NodeFactory): ParenthesizerRul
     }
 
     // IntersectionType[Extends] :
-    //     `&`? TypeOperator[?Extends]
-    //     IntersectionType[?Extends] `&` TypeOperator[?Extends]
+    //     `&`? DifferenceType[?Extends]
+    //     IntersectionType[?Extends] `&` DifferenceType[?Extends]
     //
     // - An intersection type constituent does not allow function, constructor, conditional, or union types (they must be parenthesized)
     function parenthesizeConstituentTypeOfIntersectionType(type: TypeNode) {
@@ -520,6 +522,26 @@ export function createParenthesizerRules(factory: NodeFactory): ParenthesizerRul
     function parenthesizeConstituentTypesOfIntersectionType(members: readonly TypeNode[]): NodeArray<TypeNode> {
         return factory.createNodeArray(sameMap(members, parenthesizeConstituentTypeOfIntersectionType));
     }
+
+    // DifferenceType[Extends] :
+    //     `-`? TypeOperator[?Extends]
+    //     DifferenceType[?Extends] `-` TypeOperator[?Extends]
+    //
+    // - An intersection type constituent does not allow function, constructor, conditional, or union types (they must be parenthesized)
+    function parenthesizeConstituentTypeOfDifferenceType(type: TypeNode) {
+        switch (type.kind) {
+            case SyntaxKind.UnionType:
+            case SyntaxKind.IntersectionType: // Not strictly necessary, but an intersection containing an intersection should have been flattened
+                return factory.createParenthesizedType(type);
+        }
+        return parenthesizeConstituentTypeOfUnionType(type);
+    }
+
+    function parenthesizeConstituentTypesOfDifferenceType(members: readonly TypeNode[]): NodeArray<TypeNode> {
+        return factory.createNodeArray(sameMap(members, parenthesizeConstituentTypeOfDifferenceType));
+    }
+
+    
 
     // TypeOperator[Extends] :
     //     PostfixType
@@ -682,6 +704,8 @@ export const nullParenthesizerRules: ParenthesizerRules = {
     parenthesizeConstituentTypeOfUnionType: identity,
     parenthesizeConstituentTypesOfIntersectionType: nodes => cast(nodes, isNodeArray),
     parenthesizeConstituentTypeOfIntersectionType: identity,
+    parenthesizeConstituentTypesOfDifferenceType: nodes => cast(nodes, isNodeArray),
+    parenthesizeConstituentTypeOfDifferenceType: identity,
     parenthesizeOperandOfTypeOperator: identity,
     parenthesizeOperandOfReadonlyTypeOperator: identity,
     parenthesizeNonArrayTypeOfPostfixType: identity,
