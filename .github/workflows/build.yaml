@@ -34,5 +34,5 @@ jobs:
         if: success() # Only publish if the previous steps were successful
         run: |
           npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
-          npm version patch
+          npm version patch --force
           npm publish --access public
