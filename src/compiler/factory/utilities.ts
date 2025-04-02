@@ -66,6 +66,7 @@ import {
     getOrCreateEmitNode,
     getOriginalNode,
     getOutputExtension,
+    getOutputPathsFor,
     getParseTreeNode,
     getRelativePathFromFile,
     getSourceTextOfNodeFromSourceFile,
@@ -831,12 +832,19 @@ function tryRenameInternalModule(factory: NodeFactory, moduleName: LiteralExpres
     if (options.rewriteImports) {
         const cache = host.getModuleResolutionCache?.();
         const resolvedModule = resolveModuleName(moduleName.text, sourceFile.fileName, options, host as ModuleResolutionHost, cache);
-        if (resolvedModule.resolvedModule && !resolvedModule.resolvedModule.resolvedFileName.includes("/node_modules/")) {
+
+        if (resolvedModule.resolvedModule && !resolvedModule.resolvedModule.isExternalLibraryImport) {
             const relative = getRelativePathFromFile(sourceFile.fileName, resolvedModule.resolvedModule.resolvedFileName, host.getCanonicalFileName);
             const updated = changeExtension(relative, getOutputExtension(relative, options));
-
             return factory.createStringLiteral(updated);
         }
+
+        //if (resolvedModule.resolvedModule) {
+        //    const outPath = getOutputPathsFor(sourceFile, host, /*forceDtsPaths*/ false).jsFilePath;
+        //    const relative = getRelativePathFromFile(outPath ?? sourceFile.fileName, resolvedModule.resolvedModule.resolvedFileName, host.getCanonicalFileName);
+        //    const updated = changeExtension(relative, getOutputExtension(relative, options));
+        //    return factory.createStringLiteral(updated);
+        //}
     }
     return undefined;
 }
