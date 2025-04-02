@@ -49,6 +49,11 @@
             "problemMatcher": [
                 "$tsc"
             ]
+        },
+        {
+            "label": "LKG (last known good)",
+            "type": "shell",
+            "command": "npx hereby lkg"
         }
     ]
 }
