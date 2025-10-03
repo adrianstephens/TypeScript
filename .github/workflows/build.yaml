@@ -1,0 +1,38 @@
+name: Build, Test, and Commit
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run LKG build
+        run: npx hereby LKG
+
+      - name: Publish to npm
+        if: success() # Only publish if the previous steps were successful
+        run: |
+          npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+          npm version patch --force
+          npm publish --access public

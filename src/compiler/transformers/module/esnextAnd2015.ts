@@ -158,7 +158,7 @@ export function transformECMAScriptModule(context: TransformationContext): (x: S
                 if (node === importsAndRequiresToRewriteOrShim?.[0]) {
                     return visitImportOrRequireCall(importsAndRequiresToRewriteOrShim.shift()!);
                 }
-                break;
+                // fallthrough
             default:
                 if (importsAndRequiresToRewriteOrShim?.length && rangeContainsRange(node, importsAndRequiresToRewriteOrShim[0])) {
                     return visitEachChild(node, visitor, context);
@@ -169,6 +169,18 @@ export function transformECMAScriptModule(context: TransformationContext): (x: S
     }
 
     function visitImportDeclaration(node: ImportDeclaration): VisitResult<ImportDeclaration> {
+        if (compilerOptions.rewriteImports) {
+            const moduleName = getExternalModuleNameLiteral(factory, node, currentSourceFile!, host, resolver, compilerOptions);
+            if (moduleName) {
+                return factory.updateImportDeclaration(
+                    node,
+                    node.modifiers,
+                    node.importClause,
+                    moduleName,
+                    node.attributes,
+                );
+            }
+        }
         if (!compilerOptions.rewriteRelativeImportExtensions) {
             return node;
         }
