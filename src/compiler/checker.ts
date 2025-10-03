@@ -1144,6 +1144,8 @@ import {
 import * as moduleSpecifiers from "./_namespaces/ts.moduleSpecifiers.js";
 import * as performance from "./_namespaces/ts.performance.js";
 
+import {checkBinaryOperatorOverload, checkPrefixUnaryOperatorOverload, checkPostfixUnaryOperatorOverload} from "./transformers/operatorOverloading.js";
+
 const ambientModuleSymbolRegex = /^".+"$/;
 const anon = "(anonymous)" as __String & string;
 
@@ -39888,6 +39890,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     }));
                 }
         }
+
+        const overloadType = checkPrefixUnaryOperatorOverload(node.operator, operandType);
+        if (overloadType) {
+            return overloadType;
+        }
+
         switch (node.operator) {
             case SyntaxKind.PlusToken:
             case SyntaxKind.MinusToken:
@@ -39930,6 +39938,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         if (operandType === silentNeverType) {
             return silentNeverType;
         }
+
+        const overloadType = checkPostfixUnaryOperatorOverload(node.operator, operandType);
+        if (overloadType) {
+            return overloadType;
+        }
+
         const ok = checkArithmeticOperandType(
             node.operand,
             checkNonNullType(operandType, node.operand),
@@ -40656,6 +40670,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 rightType = checkNonNullType(rightType, right);
 
                 let suggestedOperator: PunctuationSyntaxKind | undefined;
+                let overloadType: Type | undefined;
+
                 // if a user tries to apply a bitwise operator to 2 boolean operands
                 // try and return them a helpful suggestion
                 if (
@@ -40665,6 +40681,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 ) {
                     error(errorNode || operatorToken, Diagnostics.The_0_operator_is_not_allowed_for_boolean_types_Consider_using_1_instead, tokenToString(operatorToken.kind), tokenToString(suggestedOperator));
                     return numberType;
+                }
+                else if (overloadType = checkBinaryOperatorOverload(operator, leftType, rightType)) {
+                    checkAssignmentOperator(overloadType);
+                    return overloadType;
                 }
                 else {
                     // otherwise just check each operand separately and report errors as normal
@@ -40761,6 +40781,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (resultType && !checkForDisallowedESSymbolOperand(operator)) {
                     return resultType;
                 }
+
+                resultType ??= checkBinaryOperatorOverload(operator, leftType, rightType);
 
                 if (!resultType) {
                     // Types that have a reasonably good chance of being a valid operand type.
