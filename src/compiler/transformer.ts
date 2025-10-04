@@ -76,6 +76,7 @@ import {
 } from "./_namespaces/ts.js";
 import * as performance from "./_namespaces/ts.performance.js";
 import {transformOperatorOverloading} from "./transformers/operatorOverloading.js";
+import {transformFunctionOverloadDispatch} from "./transformers/functionOverloadDispatch.js";
 
 function getModuleTransformer(moduleKind: ModuleKind): TransformerFactory<SourceFile | Bundle> {
     switch (moduleKind) {
@@ -137,7 +138,14 @@ function getScriptTransformers(compilerOptions: CompilerOptions, typeChecker: Ty
     addRange(transformers, customTransformers && map(customTransformers.before, wrapScriptTransformerFactory));
 
     transformers.push(transformTypeScript);
-    transformers.push((context) => transformOperatorOverloading(context, typeChecker));
+
+    if (compilerOptions.operatorOverloading) {
+        transformers.push((context) => transformOperatorOverloading(context, typeChecker));
+    }
+
+    if (compilerOptions.functionOverloadDispatch) {
+        transformers.push((context) => transformFunctionOverloadDispatch(context, typeChecker));
+    }
 
     if (compilerOptions.experimentalDecorators) {
         transformers.push(transformLegacyDecorators);

@@ -16294,7 +16294,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             // Don't include signature if node is the implementation of an overloaded function. A node is considered
             // an implementation node if it has a body and the previous node is of the same kind and immediately
             // precedes the implementation node (i.e. has the same parent and ends where the implementation starts).
-            if (i > 0 && (decl as FunctionLikeDeclaration).body) {
+            // Exception: When functionOverloadDispatch is enabled, include all implementations as signatures
+            if (i > 0 && (decl as FunctionLikeDeclaration).body && !compilerOptions.functionOverloadDispatch) {
                 const previous = symbol.declarations[i - 1];
                 if (decl.parent === previous.parent && decl.kind === previous.kind && decl.pos === previous.end) {
                     continue;
@@ -39891,7 +39892,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 }
         }
 
-        const overloadType = checkPrefixUnaryOperatorOverload(node.operator, operandType);
+        const overloadType = compilerOptions.operatorOverloading && checkPrefixUnaryOperatorOverload(node.operator, operandType);
         if (overloadType) {
             return overloadType;
         }
@@ -39939,7 +39940,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             return silentNeverType;
         }
 
-        const overloadType = checkPostfixUnaryOperatorOverload(node.operator, operandType);
+        const overloadType = compilerOptions.operatorOverloading && checkPostfixUnaryOperatorOverload(node.operator, operandType);
         if (overloadType) {
             return overloadType;
         }
@@ -40682,7 +40683,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     error(errorNode || operatorToken, Diagnostics.The_0_operator_is_not_allowed_for_boolean_types_Consider_using_1_instead, tokenToString(operatorToken.kind), tokenToString(suggestedOperator));
                     return numberType;
                 }
-                else if (overloadType = checkBinaryOperatorOverload(operator, leftType, rightType)) {
+                else if (compilerOptions.operatorOverloading && (overloadType = checkBinaryOperatorOverload(operator, leftType, rightType))) {
                     checkAssignmentOperator(overloadType);
                     return overloadType;
                 }
@@ -40782,7 +40783,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     return resultType;
                 }
 
-                resultType ??= checkBinaryOperatorOverload(operator, leftType, rightType);
+                if (compilerOptions.operatorOverloading)
+                    resultType ??= checkBinaryOperatorOverload(operator, leftType, rightType);
 
                 if (!resultType) {
                     // Types that have a reasonably good chance of being a valid operand type.
@@ -43189,7 +43191,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         if (isConstructor) {
                             multipleConstructorImplementation = true;
                         }
-                        else {
+                        else if (!compilerOptions.functionOverloadDispatch) {
                             duplicateFunctionDeclaration = true;
                         }
                     }
