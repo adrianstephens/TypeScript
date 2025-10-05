@@ -16288,14 +16288,18 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     function getSignaturesOfSymbol(symbol: Symbol | undefined): Signature[] {
         if (!symbol || !symbol.declarations) return emptyArray;
         const result: Signature[] = [];
+        const useImplementations = compilerOptions.functionOverloadDispatch && symbol.declarations.filter(d => 
+            (isFunctionDeclaration(d) && d.body) || (isMethodDeclaration(d) && d.body)
+        ).length > 1;
+
         for (let i = 0; i < symbol.declarations.length; i++) {
             const decl = symbol.declarations[i];
             if (!isFunctionLike(decl)) continue;
             // Don't include signature if node is the implementation of an overloaded function. A node is considered
             // an implementation node if it has a body and the previous node is of the same kind and immediately
             // precedes the implementation node (i.e. has the same parent and ends where the implementation starts).
-            // Exception: When functionOverloadDispatch is enabled, include all implementations as signatures
-            if (i > 0 && (decl as FunctionLikeDeclaration).body && !compilerOptions.functionOverloadDispatch) {
+            // Exception: When functionOverloadDispatch is enabled and there are multiple implementations, include them all
+            if (!useImplementations && i > 0 && (decl as FunctionLikeDeclaration).body) {
                 const previous = symbol.declarations[i - 1];
                 if (decl.parent === previous.parent && decl.kind === previous.kind && decl.pos === previous.end) {
                     continue;
@@ -39892,7 +39896,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 }
         }
 
-        const overloadType = compilerOptions.operatorOverloading && checkPrefixUnaryOperatorOverload(node.operator, operandType);
+        const overloadType = compilerOptions.operatorOverloading && checkPrefixUnaryOperatorOverload(node.operator, operandType, checker);
         if (overloadType) {
             return overloadType;
         }
@@ -39940,7 +39944,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             return silentNeverType;
         }
 
-        const overloadType = compilerOptions.operatorOverloading && checkPostfixUnaryOperatorOverload(node.operator, operandType);
+        const overloadType = compilerOptions.operatorOverloading && checkPostfixUnaryOperatorOverload(node.operator, operandType, checker);
         if (overloadType) {
             return overloadType;
         }
@@ -40683,7 +40687,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     error(errorNode || operatorToken, Diagnostics.The_0_operator_is_not_allowed_for_boolean_types_Consider_using_1_instead, tokenToString(operatorToken.kind), tokenToString(suggestedOperator));
                     return numberType;
                 }
-                else if (compilerOptions.operatorOverloading && (overloadType = checkBinaryOperatorOverload(operator, leftType, rightType))) {
+                else if (compilerOptions.operatorOverloading && (overloadType = checkBinaryOperatorOverload(operator, leftType, rightType, checker))) {
                     checkAssignmentOperator(overloadType);
                     return overloadType;
                 }
@@ -40784,7 +40788,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 }
 
                 if (compilerOptions.operatorOverloading)
-                    resultType ??= checkBinaryOperatorOverload(operator, leftType, rightType);
+                    resultType ??= checkBinaryOperatorOverload(operator, leftType, rightType, checker);
 
                 if (!resultType) {
                     // Types that have a reasonably good chance of being a valid operand type.

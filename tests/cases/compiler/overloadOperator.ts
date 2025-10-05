@@ -8,6 +8,9 @@ interface Iaddable<T> {
 class Point implements Iaddable<Point> {
     constructor(public x: number, public y: number) {}
     
+    add(other: number): Point {
+        return new Point(this.x + other, this.y + other);
+    }
     add(other: Point): Point {
         return new Point(this.x + other.x, this.y + other.y);
     }
@@ -29,11 +32,41 @@ class Point implements Iaddable<Point> {
     not(): Point {
         return new Point(this.x === 0 ? 1 : 0, this.y === 0 ? 1 : 0);
     }
+    cmp(other: Point): number {
+        return this.x === other.x ? (this.y - other.y) : (this.x - other.x);
+    }
+
+    //lt(other: Point): boolean {
+    //    return this.x < other.x && this.y < other.y;
+    //}
+    eq(other: Point): boolean {
+        return this.x === other.x && this.y === other.y;
+    }
+    /*
+    le(other: Point): boolean {
+        return this.x <= other.x && this.y <= other.y;
+    }
+    gt(other: Point): boolean {
+        return this.x > other.x && this.y > other.y;
+    }
+    ge(other: Point): boolean {
+        return this.x >= other.x && this.y >= other.y;
+    }
+    eq(other: Point): boolean {
+        return this.x === other.x && this.y === other.y;
+    }
+    ne(other: Point): boolean {
+        return this.x !== other.x || this.y !== other.y;
+    }
+    */
 }
 
 // This should compile and transform
 const p1 = new Point(1, 2);
 const p2 = new Point(3, 4);
+
+console.log(1 < 2);
+const t = p1 < 1;
 
 // With operator overloading enabled:
 let p3 = p1 + p2;

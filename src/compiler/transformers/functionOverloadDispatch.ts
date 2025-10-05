@@ -1,6 +1,5 @@
 import {
     Bundle,
-    CallExpression,
     factory,
     FunctionDeclaration,
     IntersectionType,
@@ -22,6 +21,14 @@ import {
     TypeChecker,
     visitEachChild,
     visitNode,
+    MethodDeclaration,
+    isMethodDeclaration,
+    PropertyName,
+    ParameterDeclaration,
+    NodeArray,
+    getTextOfPropertyName,
+    isPropertyAccessExpression,
+    Expression,
 } from "../_namespaces/ts.js";
 
 const simpleNames: [TypeFlags, string][] = [
@@ -69,6 +76,7 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
         // Handle object types
         if (type.flags & TypeFlags.Object) {
             const objectType = type as ObjectType;
+            const args = objectType.objectFlags & ObjectFlags.Reference ? typeChecker.getTypeArguments(type as TypeReference) : [];
             
             // Array types
             if (typeChecker.isArrayType(type))
@@ -76,15 +84,12 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
             
             // Tuple types
             if (typeChecker.isTupleType(type))
-                return `T${Types(typeChecker.getTypeArguments(type as TypeReference))}`;
+                return `T${Types(args)}`;
             
             // Class/Interface types with symbol name
             if (type.symbol?.escapedName) {
                 const baseName = type.symbol.escapedName as string;
-                
-                return `O${baseName}${objectType.objectFlags & ObjectFlags.Reference
-                    ? Types(typeChecker.getTypeArguments(objectType as TypeReference))
-                    : ""}`;
+                return `O${baseName}${args.map(arg => getTypeNameFromType(arg)).join("")}`;
             }
             
             // Anonymous object types - use a hash or simplified representation
@@ -114,26 +119,29 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
     }
 
     // Generate a mangled name for a function implementation based on its parameter types
-    function generateMangledName(func: FunctionDeclaration): string {
-        const baseName = func.name?.escapedText as string;
-        return [baseName, ...func.parameters.map(param => getTypeNameFromType(typeChecker.getTypeAtLocation(param.name)))].join('$');
+    function generateMangledName(name: PropertyName, params: NodeArray<ParameterDeclaration> | ParameterDeclaration[]): string {
+        const baseName = getTextOfPropertyName(name).toString();
+        return [baseName, ...params.map(param => getTypeNameFromType(typeChecker.getTypeAtLocation(param.name)))].join('$');
+    }
+
+    function getImplementations(node: Node) {
+        const symbol = typeChecker.getSymbolAtLocation(node);
+        return (symbol?.declarations ?? []).filter(decl => (isFunctionDeclaration(decl) || isMethodDeclaration(decl)) && decl.body) as (FunctionDeclaration | MethodDeclaration)[];
     }
 
     // Find the appropriate implementation function for a call expression based on matching the arguments to available function signatures
-    function findImplementationForCall(callExpr: CallExpression) {
-        const symbol = typeChecker.getSymbolAtLocation(callExpr.expression);
-        if ((symbol?.declarations?.length ?? 0) < 2)
+    function findImplementationForCall(implementations: (FunctionDeclaration|MethodDeclaration)[], args0: NodeArray<Expression> | Expression[]) {
+        if (implementations.length < 2)
             return undefined;
 
         // Get all argument types
-        const args = callExpr.arguments.map(arg => typeChecker.getTypeAtLocation(arg));
+        const args = args0.map(arg => typeChecker.getTypeAtLocation(arg));
         
         // Filter to function declarations with bodies and matching parameters
-        const candidates = symbol!.declarations!.filter(decl =>
-            isFunctionDeclaration(decl)
-            && decl.body && decl.parameters.length === callExpr.arguments.length
+        const candidates = implementations.filter(decl =>
+            decl.parameters.length === args.length
             && !args.some((arg, i) => !typeChecker.isTypeAssignableTo(arg, typeChecker.getTypeAtLocation(decl.parameters[i].name)))
-        ) as FunctionDeclaration[];
+        );
 
         if (candidates.length) {
             let bestCandidate = candidates[0];
@@ -195,50 +203,72 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
     function transformSourceFile(sourceFile: SourceFile): SourceFile {
         
         function visitor(node: Node): Node {
-            if (isFunctionDeclaration(node))
-                return visitFunctionDeclaration(node);
+
+            if (isFunctionDeclaration(node)) {
+                const implementations = getImplementations(node.name!);
+                if (implementations.length > 1) { // More than one implementation
+                    const mangledName = generateMangledName(node.name!, node.parameters);
+                    return factory.createFunctionDeclaration(
+                        node.modifiers,
+                        node.asteriskToken,
+                        factory.createIdentifier(mangledName),
+                        node.typeParameters,
+                        node.parameters,
+                        node.type,
+                        node.body
+                    );
+                }
+            }
             
-            if (isCallExpression(node))
-                return visitCallExpression(node);
-            
-            return visitEachChild(node, visitor, context);
-        }
-        
-        function visitFunctionDeclaration(node: FunctionDeclaration): Node {
-            const symbol = typeChecker.getSymbolAtLocation(node.name!);
-            if (symbol?.declarations?.length ?? 0 > 1) {
-                const mangledName = generateMangledName(node);
-                return factory.createFunctionDeclaration(
-                    node.modifiers,
-                    node.asteriskToken,
-                    factory.createIdentifier(mangledName),
-                    node.typeParameters,
-                    node.parameters,
-                    node.type,
-                    node.body
-                );
+            if (isCallExpression(node)) {
+                // Only handle calls to identifiers (simple function calls)
+                if (isIdentifier(node.expression)) {
+                    const decl = findImplementationForCall(getImplementations(node.expression), node.arguments);
+                    if (decl) {
+                        const mangledName = generateMangledName(decl.name!, decl.parameters);
+                        const newExpression = factory.createIdentifier(mangledName);
+                        return factory.createCallExpression(
+                            newExpression,
+                            node.typeArguments,
+                            node.arguments
+                        );
+                    }
+
+                } else if (isPropertyAccessExpression(node.expression)) {
+                    const decl = findImplementationForCall(getImplementations(node.expression.name), node.arguments);//.slice(1));
+                    if (decl) {
+                        const mangledName = generateMangledName(decl.name!, decl.parameters);//.slice(1));
+                        const newExpression = factory.createPropertyAccessExpression(node.expression.expression, factory.createIdentifier(mangledName));
+                        return factory.createCallExpression(
+                            newExpression,
+                            node.typeArguments,
+                            node.arguments
+                        );
+                    }
+                }
+            }
+
+            if (isMethodDeclaration(node)) {
+                const implementations = getImplementations(node.name);
+                if (implementations.length > 1) { // More than one implementation
+                    const mangledName = generateMangledName(node.name, node.parameters);
+                    return factory.createMethodDeclaration(
+                        node.modifiers,
+                        node.asteriskToken,
+                        factory.createIdentifier(mangledName),
+                        node.questionToken,
+                        node.typeParameters,
+                        node.parameters,
+                        node.type,
+                        node.body
+                    );
+                }
             }
 
             return visitEachChild(node, visitor, context);
         }
         
-        function visitCallExpression(node: CallExpression): Node {
-            // Only handle calls to identifiers (simple function calls)
-            if (isIdentifier(node.expression)) {
-                const decl = findImplementationForCall(node);
-                if (decl) {
-                    const mangledName = generateMangledName(decl);
-                    const newExpression = factory.createIdentifier(mangledName);
-                    return factory.createCallExpression(
-                        newExpression,
-                        node.typeArguments,
-                        node.arguments
-                    );
-                }
-            }
-            return visitEachChild(node, visitor, context);
-        }
-        
+
         return visitNode(sourceFile, visitor) as SourceFile;
     }
 }

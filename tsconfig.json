@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "operatorOverloading": true,
     "functionOverloadDispatch": true,
     "target": "ES2020",
     "module": "commonjs",
@@ -7,7 +8,7 @@
     "noEmit": false
   },
   "files": [
-    "comprehensive-overload-test.ts",
-    "tests\\cases\\compiler\\overloadFunction.ts"
+    "tests\\cases\\compiler\\overloadOperator.ts",
+    "tests\\cases\\compiler\\overloadFunction.ts",
   ]
 }
