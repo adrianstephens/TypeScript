@@ -13,11 +13,11 @@
         "javascript"
     ],
     "bugs": {
-        "url": "https://github.com/microsoft/TypeScript/issues"
+        "url": "https://github.com/adrianstephens/TypeScript/issues"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/microsoft/TypeScript.git"
+        "url": "https://github.com/adrianstephens/TypeScript.git"
     },
     "main": "./lib/typescript.js",
     "typings": "./lib/typescript.d.ts",
@@ -98,7 +98,9 @@
         "lint": "hereby lint",
         "knip": "hereby knip",
         "format": "dprint fmt",
-        "setup-hooks": "node scripts/link-hooks.mjs"
+        "setup-hooks": "node scripts/link-hooks.mjs",
+        "combine-branches": "node scripts/combine-branches.mjs --auto-resolve-baselines",
+        "clean-branches": "node scripts/cleanup-temp-branches.mjs --switch-first"
     },
     "browser": {
         "fs": false,
