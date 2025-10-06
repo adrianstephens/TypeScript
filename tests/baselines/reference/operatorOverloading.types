@@ -1,0 +1,1154 @@
+//// [tests/cases/compiler/operatorOverloading.ts] ////
+
+=== operatorOverloading.ts ===
+// Test operator overloading transformation
+
+// Interface for addable types
+interface Addable<T> {
+    add(other: T): T;
+>add : (other: T) => T
+>    : ^     ^^ ^^^^^ 
+>other : T
+>      : ^
+}
+
+// Point class with comprehensive operator overloads
+class Point implements Addable<Point> {
+>Point : Point
+>      : ^^^^^
+
+    constructor(public x: number, public y: number) {}
+>x : number
+>  : ^^^^^^
+>y : number
+>  : ^^^^^^
+    
+    // Addition overloads
+    add(other: number): Point {
+>add : (other: number) => Point
+>    : ^     ^^      ^^^^^     
+>other : number
+>      : ^^^^^^
+
+        return new Point(this.x + other, this.y + other);
+>new Point(this.x + other, this.y + other) : Point
+>                                          : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x + other : number
+>               : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other : number
+>      : ^^^^^^
+>this.y + other : number
+>               : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other : number
+>      : ^^^^^^
+    }
+    
+    add(other: Point): Point {
+>add : (other: number) => Point
+>    : ^     ^^      ^^^^^     
+>other : Point
+>      : ^^^^^
+
+        return new Point(this.x + other.x, this.y + other.y);
+>new Point(this.x + other.x, this.y + other.y) : Point
+>                                              : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x + other.x : number
+>                 : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y + other.y : number
+>                 : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    // Subtraction overloads
+    sub(other: Point): Point {
+>sub : (other: Point) => Point
+>    : ^     ^^     ^^^^^     
+>other : Point
+>      : ^^^^^
+
+        return new Point(this.x - other.x, this.y - other.y);
+>new Point(this.x - other.x, this.y - other.y) : Point
+>                                              : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x - other.x : number
+>                 : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y - other.y : number
+>                 : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    sub(other: number): Point {
+>sub : (other: Point) => Point
+>    : ^     ^^     ^^^^^     
+>other : number
+>      : ^^^^^^
+
+        return new Point(this.x - other, this.y - other);
+>new Point(this.x - other, this.y - other) : Point
+>                                          : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x - other : number
+>               : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other : number
+>      : ^^^^^^
+>this.y - other : number
+>               : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other : number
+>      : ^^^^^^
+    }
+    
+    // Right-hand subtraction (for when Point is on right side)
+    rsub(other: number): Point {
+>rsub : (other: number) => Point
+>     : ^     ^^      ^^^^^     
+>other : number
+>      : ^^^^^^
+
+        return new Point(other - this.x, other - this.y);
+>new Point(other - this.x, other - this.y) : Point
+>                                          : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>other - this.x : number
+>               : ^^^^^^
+>other : number
+>      : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other - this.y : number
+>               : ^^^^^^
+>other : number
+>      : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    // Multiplication overloads
+    mul(other: Point): Point {
+>mul : (other: Point) => Point
+>    : ^     ^^     ^^^^^     
+>other : Point
+>      : ^^^^^
+
+        return new Point(this.x * other.x, this.y * other.y);
+>new Point(this.x * other.x, this.y * other.y) : Point
+>                                              : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x * other.x : number
+>                 : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y * other.y : number
+>                 : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    mul(other: number): Point {
+>mul : (other: Point) => Point
+>    : ^     ^^     ^^^^^     
+>other : number
+>      : ^^^^^^
+
+        return new Point(this.x * other, this.y * other);
+>new Point(this.x * other, this.y * other) : Point
+>                                          : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x * other : number
+>               : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other : number
+>      : ^^^^^^
+>this.y * other : number
+>               : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other : number
+>      : ^^^^^^
+    }
+    
+    // Division overloads
+    div(other: Point): Point {
+>div : (other: Point) => Point
+>    : ^     ^^     ^^^^^     
+>other : Point
+>      : ^^^^^
+
+        return new Point(this.x / other.x, this.y / other.y);
+>new Point(this.x / other.x, this.y / other.y) : Point
+>                                              : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x / other.x : number
+>                 : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y / other.y : number
+>                 : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    div(other: number): Point {
+>div : (other: Point) => Point
+>    : ^     ^^     ^^^^^     
+>other : number
+>      : ^^^^^^
+
+        return new Point(this.x / other, this.y / other);
+>new Point(this.x / other, this.y / other) : Point
+>                                          : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x / other : number
+>               : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other : number
+>      : ^^^^^^
+>this.y / other : number
+>               : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other : number
+>      : ^^^^^^
+    }
+    
+    // Modulus overload
+    mod(other: Point): Point {
+>mod : (other: Point) => Point
+>    : ^     ^^     ^^^^^     
+>other : Point
+>      : ^^^^^
+
+        return new Point(this.x % other.x, this.y % other.y);
+>new Point(this.x % other.x, this.y % other.y) : Point
+>                                              : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x % other.x : number
+>                 : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y % other.y : number
+>                 : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    // Logical NOT overload
+    not(): Point {
+>not : () => Point
+>    : ^^^^^^     
+
+        return new Point(this.x === 0 ? 1 : 0, this.y === 0 ? 1 : 0);
+>new Point(this.x === 0 ? 1 : 0, this.y === 0 ? 1 : 0) : Point
+>                                                      : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>this.x === 0 ? 1 : 0 : 0 | 1
+>                     : ^^^^^
+>this.x === 0 : boolean
+>             : ^^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>0 : 0
+>  : ^
+>1 : 1
+>  : ^
+>0 : 0
+>  : ^
+>this.y === 0 ? 1 : 0 : 0 | 1
+>                     : ^^^^^
+>this.y === 0 : boolean
+>             : ^^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>0 : 0
+>  : ^
+>1 : 1
+>  : ^
+>0 : 0
+>  : ^
+    }
+    
+    // Comparison overloads
+    cmp(other: Point): number {
+>cmp : (other: Point) => number
+>    : ^     ^^     ^^^^^      
+>other : Point
+>      : ^^^^^
+
+        return this.x === other.x ? (this.y - other.y) : (this.x - other.x);
+>this.x === other.x ? (this.y - other.y) : (this.x - other.x) : number
+>                                                             : ^^^^^^
+>this.x === other.x : boolean
+>                   : ^^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>(this.y - other.y) : number
+>                   : ^^^^^^
+>this.y - other.y : number
+>                 : ^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+>(this.x - other.x) : number
+>                   : ^^^^^^
+>this.x - other.x : number
+>                 : ^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+    }
+    
+    eq(other: Point): boolean {
+>eq : (other: Point) => boolean
+>   : ^     ^^     ^^^^^       
+>other : Point
+>      : ^^^^^
+
+        return this.x === other.x && this.y === other.y;
+>this.x === other.x && this.y === other.y : boolean
+>                                         : ^^^^^^^
+>this.x === other.x : boolean
+>                   : ^^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y === other.y : boolean
+>                   : ^^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    ne(other: Point): boolean {
+>ne : (other: Point) => boolean
+>   : ^     ^^     ^^^^^       
+>other : Point
+>      : ^^^^^
+
+        return this.x !== other.x || this.y !== other.y;
+>this.x !== other.x || this.y !== other.y : boolean
+>                                         : ^^^^^^^
+>this.x !== other.x : boolean
+>                   : ^^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y !== other.y : boolean
+>                   : ^^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    lt(other: Point): boolean {
+>lt : (other: Point) => boolean
+>   : ^     ^^     ^^^^^       
+>other : Point
+>      : ^^^^^
+
+        return this.x < other.x && this.y < other.y;
+>this.x < other.x && this.y < other.y : boolean
+>                                     : ^^^^^^^
+>this.x < other.x : boolean
+>                 : ^^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y < other.y : boolean
+>                 : ^^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    le(other: Point): boolean {
+>le : (other: Point) => boolean
+>   : ^     ^^     ^^^^^       
+>other : Point
+>      : ^^^^^
+
+        return this.x <= other.x && this.y <= other.y;
+>this.x <= other.x && this.y <= other.y : boolean
+>                                       : ^^^^^^^
+>this.x <= other.x : boolean
+>                  : ^^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y <= other.y : boolean
+>                  : ^^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    gt(other: Point): boolean {
+>gt : (other: Point) => boolean
+>   : ^     ^^     ^^^^^       
+>other : Point
+>      : ^^^^^
+
+        return this.x > other.x && this.y > other.y;
+>this.x > other.x && this.y > other.y : boolean
+>                                     : ^^^^^^^
+>this.x > other.x : boolean
+>                 : ^^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y > other.y : boolean
+>                 : ^^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+    
+    ge(other: Point): boolean {
+>ge : (other: Point) => boolean
+>   : ^     ^^     ^^^^^       
+>other : Point
+>      : ^^^^^
+
+        return this.x >= other.x && this.y >= other.y;
+>this.x >= other.x && this.y >= other.y : boolean
+>                                       : ^^^^^^^
+>this.x >= other.x : boolean
+>                  : ^^^^^^^
+>this.x : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>x : number
+>  : ^^^^^^
+>other.x : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>x : number
+>  : ^^^^^^
+>this.y >= other.y : boolean
+>                  : ^^^^^^^
+>this.y : number
+>       : ^^^^^^
+>this : this
+>     : ^^^^
+>y : number
+>  : ^^^^^^
+>other.y : number
+>        : ^^^^^^
+>other : Point
+>      : ^^^^^
+>y : number
+>  : ^^^^^^
+    }
+}
+
+// Vector class for additional testing
+class Vector {
+>Vector : Vector
+>       : ^^^^^^
+
+    constructor(public values: number[]) {}
+>values : number[]
+>       : ^^^^^^^^
+    
+    add(other: Vector): Vector {
+>add : (other: Vector) => Vector
+>    : ^     ^^      ^^^^^      
+>other : Vector
+>      : ^^^^^^
+
+        return new Vector(this.values.map((v, i) => v + other.values[i]));
+>new Vector(this.values.map((v, i) => v + other.values[i])) : Vector
+>                                                           : ^^^^^^
+>Vector : typeof Vector
+>       : ^^^^^^^^^^^^^
+>this.values.map((v, i) => v + other.values[i]) : number[]
+>                                               : ^^^^^^^^
+>this.values.map : <U>(callbackfn: (value: number, index: number, array: number[]) => U, thisArg?: any) => U[]
+>                : ^ ^^          ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^       ^^^   ^^^^^^^^
+>this.values : number[]
+>            : ^^^^^^^^
+>this : this
+>     : ^^^^
+>values : number[]
+>       : ^^^^^^^^
+>map : <U>(callbackfn: (value: number, index: number, array: number[]) => U, thisArg?: any) => U[]
+>    : ^ ^^          ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^       ^^^   ^^^^^^^^
+>(v, i) => v + other.values[i] : (v: number, i: number) => number
+>                              : ^ ^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^
+>v : number
+>  : ^^^^^^
+>i : number
+>  : ^^^^^^
+>v + other.values[i] : number
+>                    : ^^^^^^
+>v : number
+>  : ^^^^^^
+>other.values[i] : number
+>                : ^^^^^^
+>other.values : number[]
+>             : ^^^^^^^^
+>other : Vector
+>      : ^^^^^^
+>values : number[]
+>       : ^^^^^^^^
+>i : number
+>  : ^^^^^^
+    }
+    
+    mul(scalar: number): Vector {
+>mul : (scalar: number) => Vector
+>    : ^      ^^      ^^^^^      
+>scalar : number
+>       : ^^^^^^
+
+        return new Vector(this.values.map(v => v * scalar));
+>new Vector(this.values.map(v => v * scalar)) : Vector
+>                                             : ^^^^^^
+>Vector : typeof Vector
+>       : ^^^^^^^^^^^^^
+>this.values.map(v => v * scalar) : number[]
+>                                 : ^^^^^^^^
+>this.values.map : <U>(callbackfn: (value: number, index: number, array: number[]) => U, thisArg?: any) => U[]
+>                : ^ ^^          ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^       ^^^   ^^^^^^^^
+>this.values : number[]
+>            : ^^^^^^^^
+>this : this
+>     : ^^^^
+>values : number[]
+>       : ^^^^^^^^
+>map : <U>(callbackfn: (value: number, index: number, array: number[]) => U, thisArg?: any) => U[]
+>    : ^ ^^          ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^       ^^^   ^^^^^^^^
+>v => v * scalar : (v: number) => number
+>                : ^ ^^^^^^^^^^^^^^^^^^^
+>v : number
+>  : ^^^^^^
+>v * scalar : number
+>           : ^^^^^^
+>v : number
+>  : ^^^^^^
+>scalar : number
+>       : ^^^^^^
+    }
+    
+    eq(other: Vector): boolean {
+>eq : (other: Vector) => boolean
+>   : ^     ^^      ^^^^^       
+>other : Vector
+>      : ^^^^^^
+
+        return this.values.every((v, i) => v === other.values[i]);
+>this.values.every((v, i) => v === other.values[i]) : boolean
+>                                                   : ^^^^^^^
+>this.values.every : { <S extends number>(predicate: (value: number, index: number, array: number[]) => value is S, thisArg?: any): this is S[]; (predicate: (value: number, index: number, array: number[]) => unknown, thisArg?: any): boolean; }
+>                  : ^^^ ^^^^^^^^^^^^^^^^^         ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^^       ^^^   ^^^        ^  ^^^         ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^       ^^       ^^^   ^^^       ^^^
+>this.values : number[]
+>            : ^^^^^^^^
+>this : this
+>     : ^^^^
+>values : number[]
+>       : ^^^^^^^^
+>every : { <S extends number>(predicate: (value: number, index: number, array: number[]) => value is S, thisArg?: any): this is S[]; (predicate: (value: number, index: number, array: number[]) => unknown, thisArg?: any): boolean; }
+>      : ^^^ ^^^^^^^^^^^^^^^^^         ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^^^^^^^^^^       ^^^   ^^^        ^  ^^^         ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^       ^^       ^^^   ^^^       ^^^
+>(v, i) => v === other.values[i] : (v: number, i: number) => boolean
+>                                : ^ ^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^
+>v : number
+>  : ^^^^^^
+>i : number
+>  : ^^^^^^
+>v === other.values[i] : boolean
+>                      : ^^^^^^^
+>v : number
+>  : ^^^^^^
+>other.values[i] : number
+>                : ^^^^^^
+>other.values : number[]
+>             : ^^^^^^^^
+>other : Vector
+>      : ^^^^^^
+>values : number[]
+>       : ^^^^^^^^
+>i : number
+>  : ^^^^^^
+    }
+}
+
+// Usage examples - should be transformed to method calls
+const p1 = new Point(1, 2);
+>p1 : Point
+>   : ^^^^^
+>new Point(1, 2) : Point
+>                : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>1 : 1
+>  : ^
+>2 : 2
+>  : ^
+
+const p2 = new Point(3, 4);
+>p2 : Point
+>   : ^^^^^
+>new Point(3, 4) : Point
+>                : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>3 : 3
+>  : ^
+>4 : 4
+>  : ^
+
+// Binary arithmetic operators
+const p3 = p1 + p2;        // Should become: p1.add(p2)
+>p3 : any
+>   : ^^^
+>p1 + p2 : any
+>        : ^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+const p4 = p1 - p2;        // Should become: p1.sub(p2)
+>p4 : Point
+>   : ^^^^^
+>p1 - p2 : Point
+>        : ^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+const p5 = p1 * p2;        // Should become: p1.mul(p2)
+>p5 : Point
+>   : ^^^^^
+>p1 * p2 : Point
+>        : ^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+const p6 = p1 / p2;        // Should become: p1.div(p2)
+>p6 : Point
+>   : ^^^^^
+>p1 / p2 : Point
+>        : ^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+const p7 = p1 % p2;        // Should become: p1.mod(p2)
+>p7 : Point
+>   : ^^^^^
+>p1 % p2 : Point
+>        : ^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+// Mixed type operations
+const p8 = p1 + 5;         // Should become: p1.add(5)
+>p8 : Point
+>   : ^^^^^
+>p1 + 5 : Point
+>       : ^^^^^
+>p1 : Point
+>   : ^^^^^
+>5 : 5
+>  : ^
+
+const p9 = p1 * 2;         // Should become: p1.mul(2)
+>p9 : number
+>   : ^^^^^^
+>p1 * 2 : number
+>       : ^^^^^^
+>p1 : Point
+>   : ^^^^^
+>2 : 2
+>  : ^
+
+const p10 = 10 - p1;       // Should become: p1.rsub(10)
+>p10 : Point
+>    : ^^^^^
+>10 - p1 : Point
+>        : ^^^^^
+>10 : 10
+>   : ^^
+>p1 : Point
+>   : ^^^^^
+
+// Unary operators
+const p11 = !p1;           // Should become: p1.not()
+>p11 : Point
+>    : ^^^^^
+>!p1 : Point
+>    : ^^^^^
+>p1 : Point
+>   : ^^^^^
+
+// Comparison operators
+const isEqual = p1 == p2;   // Should become: p1.eq(p2)
+>isEqual : boolean
+>        : ^^^^^^^
+>p1 == p2 : boolean
+>         : ^^^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+const isNotEqual = p1 != p2; // Should become: p1.ne(p2)
+>isNotEqual : boolean
+>           : ^^^^^^^
+>p1 != p2 : boolean
+>         : ^^^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+const isLess = p1 < p2;     // Should become: p1.lt(p2)
+>isLess : boolean
+>       : ^^^^^^^
+>p1 < p2 : boolean
+>        : ^^^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+const isLessEq = p1 <= p2;  // Should become: p1.le(p2)
+>isLessEq : boolean
+>         : ^^^^^^^
+>p1 <= p2 : boolean
+>         : ^^^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+const isGreater = p1 > p2;  // Should become: p1.gt(p2)
+>isGreater : boolean
+>          : ^^^^^^^
+>p1 > p2 : boolean
+>        : ^^^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+const isGreaterEq = p1 >= p2; // Should become: p1.ge(p2)
+>isGreaterEq : boolean
+>            : ^^^^^^^
+>p1 >= p2 : boolean
+>         : ^^^^^^^
+>p1 : Point
+>   : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+// Compound assignment operators
+let p12 = new Point(0, 0);
+>p12 : Point
+>    : ^^^^^
+>new Point(0, 0) : Point
+>                : ^^^^^
+>Point : typeof Point
+>      : ^^^^^^^^^^^^
+>0 : 0
+>  : ^
+>0 : 0
+>  : ^
+
+p12 += p1;                 // Should become: p12 = p12.add(p1)
+>p12 += p1 : any
+>          : ^^^
+>p12 : Point
+>    : ^^^^^
+>p1 : Point
+>   : ^^^^^
+
+p12 -= p2;                 // Should become: p12 = p12.sub(p2)
+>p12 -= p2 : Point
+>          : ^^^^^
+>p12 : Point
+>    : ^^^^^
+>p2 : Point
+>   : ^^^^^
+
+p12 *= 3;                  // Should become: p12 = p12.mul(3)
+>p12 *= 3 : number
+>         : ^^^^^^
+>p12 : Point
+>    : ^^^^^
+>3 : 3
+>  : ^
+
+p12 /= 2;                  // Should become: p12 = p12.div(2)
+>p12 /= 2 : number
+>         : ^^^^^^
+>p12 : Point
+>    : ^^^^^
+>2 : 2
+>  : ^
+
+// Vector operations
+const v1 = new Vector([1, 2, 3]);
+>v1 : Vector
+>   : ^^^^^^
+>new Vector([1, 2, 3]) : Vector
+>                      : ^^^^^^
+>Vector : typeof Vector
+>       : ^^^^^^^^^^^^^
+>[1, 2, 3] : number[]
+>          : ^^^^^^^^
+>1 : 1
+>  : ^
+>2 : 2
+>  : ^
+>3 : 3
+>  : ^
+
+const v2 = new Vector([4, 5, 6]);
+>v2 : Vector
+>   : ^^^^^^
+>new Vector([4, 5, 6]) : Vector
+>                      : ^^^^^^
+>Vector : typeof Vector
+>       : ^^^^^^^^^^^^^
+>[4, 5, 6] : number[]
+>          : ^^^^^^^^
+>4 : 4
+>  : ^
+>5 : 5
+>  : ^
+>6 : 6
+>  : ^
+
+const v3 = v1 + v2;        // Should become: v1.add(v2)
+>v3 : Vector
+>   : ^^^^^^
+>v1 + v2 : Vector
+>        : ^^^^^^
+>v1 : Vector
+>   : ^^^^^^
+>v2 : Vector
+>   : ^^^^^^
+
+const v4 = v1 * 2;         // Should become: v1.mul(2)
+>v4 : Vector
+>   : ^^^^^^
+>v1 * 2 : Vector
+>       : ^^^^^^
+>v1 : Vector
+>   : ^^^^^^
+>2 : 2
+>  : ^
+
+const vectorsEqual = v1 == v2; // Should become: v1.eq(v2)
+>vectorsEqual : boolean
+>             : ^^^^^^^
+>v1 == v2 : boolean
+>         : ^^^^^^^
+>v1 : Vector
+>   : ^^^^^^
+>v2 : Vector
+>   : ^^^^^^
+

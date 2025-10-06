@@ -8,7 +8,7 @@
     "noEmit": false
   },
   "files": [
-    "tests\\cases\\compiler\\overloadOperator.ts",
-    "tests\\cases\\compiler\\overloadFunction.ts",
+    "tests\\cases\\compiler\\operatorOverloading.ts",
+    "tests\\cases\\compiler\\functionOverloadDispatch.ts",
   ]
 }
