@@ -99,7 +99,7 @@
         "knip": "hereby knip",
         "format": "dprint fmt",
         "setup-hooks": "node scripts/link-hooks.mjs",
-        "combine-branches": "node scripts/combine-branches.mjs --auto-resolve-baselines",
+        "combine-branches": "node scripts/combine-branches.mjs operators rewrite-imports --auto-resolve-baselines",
         "clean-branches": "node scripts/cleanup-temp-branches.mjs --switch-first"
     },
     "browser": {
