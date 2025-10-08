@@ -15,7 +15,6 @@ import {
     isIdentifier,
     Node,
     SourceFile,
-    SyntaxKind,
     TransformationContext,
     Transformer,
     TypeChecker,
@@ -29,6 +28,8 @@ import {
     getTextOfPropertyName,
     isPropertyAccessExpression,
     Expression,
+    SignatureKind,
+    getJSDocTags,
 } from "../_namespaces/ts.js";
 
 const simpleNames: [TypeFlags, string][] = [
@@ -45,14 +46,7 @@ const simpleNames: [TypeFlags, string][] = [
 ];
  
 export function transformFunctionOverloadDispatch(context: TransformationContext, typeChecker: TypeChecker): Transformer<SourceFile | Bundle> {
-    return (node: SourceFile | Bundle) => {
-        if (node.kind === SyntaxKind.Bundle) {
-            return factory.createBundle(
-                node.sourceFiles.map(sourceFile => transformSourceFile(sourceFile))
-            );
-        }
-        return transformSourceFile(node);
-    };
+    return (node: SourceFile | Bundle) => visitNode(node, visitor) as SourceFile;
 
     function Types(types: readonly Type[]): string {
         if (types.length === 0)
@@ -68,9 +62,8 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
     function getTypeNameFromType(type: Type): string {
         // Handle primitive & special types
         for (const [flag, name] of simpleNames) {
-            if (type.flags & flag) {
+            if (type.flags & flag)
                 return name;
-            }
         }
         
         // Handle object types
@@ -85,7 +78,11 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
             // Tuple types
             if (typeChecker.isTupleType(type))
                 return `T${Types(args)}`;
-            
+
+            const sig = typeChecker.getSignaturesOfType(type, SignatureKind.Call);
+            if (sig.length > 0)
+                return `F${Types(sig[0].parameters.map(param => typeChecker.getTypeOfSymbolAtLocation(param, param.valueDeclaration!)))}`;
+
             // Class/Interface types with symbol name
             if (type.symbol?.escapedName) {
                 const baseName = type.symbol.escapedName as string;
@@ -126,7 +123,7 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
 
     function getImplementations(node: Node) {
         const symbol = typeChecker.getSymbolAtLocation(node);
-        return (symbol?.declarations ?? []).filter(decl => (isFunctionDeclaration(decl) || isMethodDeclaration(decl)) && decl.body) as (FunctionDeclaration | MethodDeclaration)[];
+        return (symbol?.declarations ?? []).filter(decl => ((isFunctionDeclaration(decl) || isMethodDeclaration(decl)) && decl.body) || getJSDocTags(decl).some(tag => tag.tagName.escapedText === "functionOverloadDispatch")) as (FunctionDeclaration | MethodDeclaration)[];
     }
 
     // Find the appropriate implementation function for a call expression based on matching the arguments to available function signatures
@@ -199,76 +196,72 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
         
         return 0;
     }
+    
+    function visitor(node: Node): Node {
+        node = visitEachChild(node, visitor, context);
 
-    function transformSourceFile(sourceFile: SourceFile): SourceFile {
-        
-        function visitor(node: Node): Node {
-
-            if (isFunctionDeclaration(node)) {
-                const implementations = getImplementations(node.name!);
-                if (implementations.length > 1) { // More than one implementation
-                    const mangledName = generateMangledName(node.name!, node.parameters);
-                    return factory.createFunctionDeclaration(
-                        node.modifiers,
-                        node.asteriskToken,
-                        factory.createIdentifier(mangledName),
-                        node.typeParameters,
-                        node.parameters,
-                        node.type,
-                        node.body
-                    );
-                }
+        if (isFunctionDeclaration(node)) {
+            const implementations = getImplementations(node.name!);
+            if (implementations.length > 1) { // More than one implementation
+                const mangledName = generateMangledName(node.name!, node.parameters);
+                return factory.createFunctionDeclaration(
+                    node.modifiers,
+                    node.asteriskToken,
+                    factory.createIdentifier(mangledName),
+                    node.typeParameters,
+                    node.parameters,
+                    node.type,
+                    node.body
+                );
             }
-            
-            if (isCallExpression(node)) {
-                // Only handle calls to identifiers (simple function calls)
-                if (isIdentifier(node.expression)) {
-                    const decl = findImplementationForCall(getImplementations(node.expression), node.arguments);
-                    if (decl) {
-                        const mangledName = generateMangledName(decl.name!, decl.parameters);
-                        const newExpression = factory.createIdentifier(mangledName);
-                        return factory.createCallExpression(
-                            newExpression,
-                            node.typeArguments,
-                            node.arguments
-                        );
-                    }
-
-                } else if (isPropertyAccessExpression(node.expression)) {
-                    const decl = findImplementationForCall(getImplementations(node.expression.name), node.arguments);//.slice(1));
-                    if (decl) {
-                        const mangledName = generateMangledName(decl.name!, decl.parameters);//.slice(1));
-                        const newExpression = factory.createPropertyAccessExpression(node.expression.expression, factory.createIdentifier(mangledName));
-                        return factory.createCallExpression(
-                            newExpression,
-                            node.typeArguments,
-                            node.arguments
-                        );
-                    }
-                }
-            }
-
-            if (isMethodDeclaration(node)) {
-                const implementations = getImplementations(node.name);
-                if (implementations.length > 1) { // More than one implementation
-                    const mangledName = generateMangledName(node.name, node.parameters);
-                    return factory.createMethodDeclaration(
-                        node.modifiers,
-                        node.asteriskToken,
-                        factory.createIdentifier(mangledName),
-                        node.questionToken,
-                        node.typeParameters,
-                        node.parameters,
-                        node.type,
-                        node.body
-                    );
-                }
-            }
-
-            return visitEachChild(node, visitor, context);
         }
         
+        if (isCallExpression(node)) {
+            // Only handle calls to identifiers (simple function calls)
+            if (isIdentifier(node.expression)) {
+                const decl = findImplementationForCall(getImplementations(node.expression), node.arguments);
+                if (decl) {
+                    const mangledName = generateMangledName(decl.name!, decl.parameters);
+                    const newExpression = factory.createIdentifier(mangledName);
+                    return factory.createCallExpression(
+                        newExpression,
+                        node.typeArguments,
+                        node.arguments
+                    );
+                }
 
-        return visitNode(sourceFile, visitor) as SourceFile;
+            } else if (isPropertyAccessExpression(node.expression)) {
+                const decl = findImplementationForCall(getImplementations(node.expression.name), node.arguments);//.slice(1));
+                if (decl) {
+                    const mangledName = generateMangledName(decl.name!, decl.parameters);//.slice(1));
+                    const newExpression = factory.createPropertyAccessExpression(node.expression.expression, factory.createIdentifier(mangledName));
+                    return factory.createCallExpression(
+                        newExpression,
+                        node.typeArguments,
+                        node.arguments
+                    );
+                }
+            }
+        }
+
+        if (isMethodDeclaration(node)) {
+            const implementations = getImplementations(node.name);
+            if (implementations.length > 1) { // More than one implementation
+                const mangledName = generateMangledName(node.name, node.parameters);
+                return factory.createMethodDeclaration(
+                    node.modifiers,
+                    node.asteriskToken,
+                    factory.createIdentifier(mangledName),
+                    node.questionToken,
+                    node.typeParameters,
+                    node.parameters,
+                    node.type,
+                    node.body
+                );
+            }
+        }
+
+        return node;
     }
+        
 }

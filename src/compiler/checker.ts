@@ -16289,7 +16289,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         if (!symbol || !symbol.declarations) return emptyArray;
         const result: Signature[] = [];
         const useImplementations = compilerOptions.functionOverloadDispatch && symbol.declarations.filter(d => 
-            (isFunctionDeclaration(d) && d.body) || (isMethodDeclaration(d) && d.body)
+            (isFunctionDeclaration(d) && d.body) || (isMethodDeclaration(d) && d.body) || getJSDocTags(d).some(tag => tag.tagName.escapedText === "functionOverloadDispatch")
         ).length > 1;
 
         for (let i = 0; i < symbol.declarations.length; i++) {
@@ -48967,7 +48967,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     if (exportedDeclarationsCount > 1) {
                         if (!isDuplicatedCommonJSExport(declarations)) {
                             for (const declaration of declarations!) {
-                                if (isNotOverload(declaration)) {
+                                // Allow duplicate exported functions when functionOverloadDispatch is enabled
+                                if (isNotOverload(declaration) && !compilerOptions.functionOverloadDispatch) {
                                     diagnostics.add(createDiagnosticForNode(declaration, Diagnostics.Cannot_redeclare_exported_variable_0, unescapeLeadingUnderscores(id)));
                                 }
                             }
@@ -50690,6 +50691,11 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             //       function foo(a: any) { // This is implementation of the overloads
             //           return a;
             //       }
+            if (compilerOptions.functionOverloadDispatch) {
+                // If there are multiple function implementations, do not treat any as an overload implementation
+                if (signaturesOfSymbol.filter(sig => sig.declaration && isFunctionDeclaration(sig.declaration) && sig.declaration.body).length > 1)
+                    return false;
+            }
             return signaturesOfSymbol.length > 1 ||
                 // If there is single signature for the symbol, it is overload if that signature isn't coming from the node
                 // e.g.: function foo(a: string): string;

@@ -2,17 +2,41 @@
 
 // Test automatic function overload dispatch transformation
 
+
+/** @functionOverloadDispatch @see */
+declare function external(value: string): string;
+/** @functionOverloadDispatch @see */
+declare function external(value: number): string;
+/** @functionOverloadDispatch @see */
+declare function external(value: boolean): string;
+/** @functionOverloadDispatch @see */
+declare function external(value: (x: boolean) => string): string;
+
+
 // Basic function overloads with primitive types
-function processValue(value: string): string {
+export function normal(value: string): string;
+export function normal(value: number): string;
+export function normal(value: boolean): string;
+export function normal(value: any): string {
+    return "normal";
+}
+
+
+
+// Basic function overloads with primitive types
+export function processValue(value: string): string {
     return "String: " + value;
 }
 
-function processValue(value: number): string {
+export function processValue(value: number): string {
     return "Number: " + value;
 }
 
-function processValue(value: boolean): string {
+export function processValue(value: boolean): string {
     return "Boolean: " + value;
+}
+export function processValue(value: (x:boolean)=>string): string {
+    return "Boolean: " + value(true);
 }
 
 // Array type overloads
@@ -77,9 +101,15 @@ function convert(value: boolean): number {
 }
 
 // Usage examples - should be automatically dispatched to specific implementations
+const ext1 = external("test");
+const ext2 = external(123);
+const ext3 = external(true);
+const ext4 = external((x: boolean) => x ? "yes" : "no");
+
 const result1 = processValue("hello");
-const result2 = processValue(42);
+const result2 = processValue(processValue(42));
 const result3 = processValue(true);
+const result4 = processValue((x: boolean) => x ? "yes" : "no");
 
 const arrayResult1 = handleArray(["a", "b", "c"]);
 const arrayResult2 = handleArray([1, 2, 3]);
