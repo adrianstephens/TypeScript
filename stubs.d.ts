@@ -10,6 +10,10 @@ declare class Array<T> extends Object {
     length: number;
     map<U>(callback: (value: T, index: number, array: T[]) => U): U[];
     join(separator?: string): string;
+    every(callback: (value: T, index: number, array: T[]) => boolean): boolean;
+    some(callback: (value: T, index: number, array: T[]) => boolean): boolean;
+    forEach(callback: (value: T, index: number, array: T[]) => void): void;
+    filter(callback: (value: T, index: number, array: T[]) => boolean): T[];
 }
 declare class Function extends Object {}
 declare class RegExp extends Object {}

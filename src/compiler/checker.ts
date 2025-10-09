@@ -1144,7 +1144,7 @@ import {
 import * as moduleSpecifiers from "./_namespaces/ts.moduleSpecifiers.js";
 import * as performance from "./_namespaces/ts.performance.js";
 
-import {checkBinaryOperatorOverload, checkPrefixUnaryOperatorOverload, checkPostfixUnaryOperatorOverload} from "./transformers/operatorOverloading.js";
+import {checkBinaryOperatorOverload, checkComparisonOperatorOverload, checkPrefixUnaryOperatorOverload, checkPostfixUnaryOperatorOverload} from "./transformers/operatorOverloading.js";
 
 const ambientModuleSymbolRegex = /^".+"$/;
 const anon = "(anonymous)" as __String & string;
@@ -40814,6 +40814,14 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (checkForDisallowedESSymbolOperand(operator)) {
                     leftType = getBaseTypeOfLiteralTypeForComparison(checkNonNullType(leftType, left));
                     rightType = getBaseTypeOfLiteralTypeForComparison(checkNonNullType(rightType, right));
+
+                    let returnType: Type|undefined = booleanType;
+                    //if (compilerOptions.operatorOverloading) {
+                    //    const overloadType = checkComparisonOperatorOverload(operator, leftType, rightType, checker);
+                    //    if (overloadType)
+                    //        return overloadType;
+                    //}
+
                     reportOperatorErrorUnless((left, right) => {
                         if (isTypeAny(left) || isTypeAny(right)) {
                             return true;
@@ -40821,8 +40829,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         const leftAssignableToNumber = isTypeAssignableTo(left, numberOrBigIntType);
                         const rightAssignableToNumber = isTypeAssignableTo(right, numberOrBigIntType);
                         return leftAssignableToNumber && rightAssignableToNumber ||
-                            !leftAssignableToNumber && !rightAssignableToNumber && areTypesComparable(left, right);
+                            !leftAssignableToNumber && !rightAssignableToNumber && areTypesComparable(left, right)
+                            || !!compilerOptions.operatorOverloading && !!(returnType = checkComparisonOperatorOverload(operator, leftType, rightType, checker));
                     });
+                    return returnType;
                 }
                 return booleanType;
             case SyntaxKind.EqualsEqualsToken:
@@ -40842,6 +40852,11 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         error(errorNode, Diagnostics.This_condition_will_always_return_0_since_JavaScript_compares_objects_by_reference_not_value, eqType ? "false" : "true");
                     }
                     checkNaNEquality(errorNode, operator, left, right);
+                    if (compilerOptions.operatorOverloading) {
+                        const overloadType = checkComparisonOperatorOverload(operator, leftType, rightType, checker);
+                        if (overloadType)
+                            return overloadType;
+                    }
                     reportOperatorErrorUnless((left, right) => isTypeEqualityComparableTo(left, right) || isTypeEqualityComparableTo(right, left));
                 }
                 return booleanType;

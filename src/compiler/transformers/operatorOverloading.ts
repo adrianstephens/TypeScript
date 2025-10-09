@@ -9,7 +9,6 @@ import {
     TransformationContext,
     Transformer,
     TypeChecker,
-    TypeFlags,
     visitEachChild,
     isAssignmentOperator,
     Type,
@@ -24,7 +23,13 @@ import {
     isIdentifier,
     setOriginalNode,
     setTextRange,
+	Mutable,
     visitNode,
+	isPrefixUnaryExpression,
+	isPostfixUnaryExpression,
+	isBinaryExpression,
+	SignatureKind,
+	NodeFlags
 } from "../_namespaces/ts.js";
 
 const PrefixUnaryOperatorMethodMap: Record<PrefixUnaryOperator, string> = {
@@ -85,6 +90,11 @@ function inverseOperator(operator: BinaryOperator): BinaryOperator | undefined {
         default: return undefined;
     }
 }
+function inverseMethods(operator: BinaryOperator) {
+    const invOp = inverseOperator(operator);
+    return invOp ? BinaryOperatorMethodMap[invOp] : undefined;
+}
+
 function reverseOperator(operator: BinaryOperator): BinaryOperator | undefined {
     switch (operator) {
         case SyntaxKind.LessThanToken: return SyntaxKind.GreaterThanToken;
@@ -96,15 +106,15 @@ function reverseOperator(operator: BinaryOperator): BinaryOperator | undefined {
 }
 
 function checkOperatorOverload(checker: TypeChecker, methodName: string, left: Type, right?: Type): Signature | undefined {
+    if (!methodName)
+        return undefined;
 
     // Check if left operand has the operator method
     const symbol = checker.getPropertyOfType(left, methodName);
-    if (!symbol || !symbol.valueDeclaration || !isMethodDeclaration(symbol.valueDeclaration))
+    if (!symbol)
         return undefined;
 
-    const methodType = checker.getTypeOfSymbol(symbol);
-    const signatures = checker.getSignaturesOfType(methodType, 0 /* SignatureKind.Call */);
-
+    const signatures = checker.getSignaturesOfType(checker.getTypeOfSymbol(symbol), SignatureKind.Call);
     if (!signatures)
         return undefined;
 
@@ -130,12 +140,34 @@ function checkOperatorOverload(checker: TypeChecker, methodName: string, left: T
     return undefined;
 }
 
-function checkOperatorOverload2(checker: TypeChecker, methodName: string, left: Type, right?: Type): Type | undefined {
-    if (methodName) {
-        const sig = checkOperatorOverload(checker, methodName, left, right);
-        if (sig)
-            return checker.getReturnTypeOfSignature(sig);
-    }  
+function checkOperatorOverloadReturn(checker: TypeChecker, methodName: string, left: Type, right?: Type): Type | undefined {
+    const sig = checkOperatorOverload(checker, methodName, left, right);
+    if (sig)
+		return checker.getReturnTypeOfSignature(sig);
+}
+
+function checkOperatorOverloadReturn2(methodNames: string[]|undefined, left: Type, right: Type, checker: TypeChecker): Type | undefined {
+    if (methodNames)
+		return checkOperatorOverloadReturn(checker, methodNames[0], left, right)
+			|| checkOperatorOverloadReturn(checker, methodNames[1], right, left);
+}
+
+export function checkPrefixUnaryOperatorOverload(operator: PrefixUnaryOperator, operand: Type, checker: TypeChecker): Type | undefined {
+    return checkOperatorOverloadReturn(checker, PrefixUnaryOperatorMethodMap[operator], operand);
+}
+
+export function checkPostfixUnaryOperatorOverload(operator: PostfixUnaryOperator, operand: Type, checker: TypeChecker): Type | undefined {
+    return checkOperatorOverloadReturn(checker, PostfixUnaryOperatorMethodMap[operator], operand);
+}
+
+export function checkBinaryOperatorOverload(operator: BinaryOperator, left: Type, right: Type, checker: TypeChecker): Type | undefined {
+    return checkOperatorOverloadReturn2(BinaryOperatorMethodMap[operator], left, right, checker);
+}
+
+export function checkComparisonOperatorOverload(operator: BinaryOperator, left: Type, right: Type, checker: TypeChecker): Type | undefined {
+    return checkOperatorOverloadReturn2(BinaryOperatorMethodMap[operator], left, right, checker)
+        ?? checkOperatorOverloadReturn2(inverseMethods(operator), left, right, checker)
+        ?? checkOperatorOverloadReturn2(["cmp","cmp"], left, right, checker);
 }
 
 function signatureIdentifier(signature: Signature): Identifier | undefined {
@@ -143,157 +175,106 @@ function signatureIdentifier(signature: Signature): Identifier | undefined {
         return factory.cloneNode(signature.declaration.name);
 }
 
-export function checkPrefixUnaryOperatorOverload(operator: PrefixUnaryOperator, operand: Type, typeChecker: TypeChecker): Type | undefined {
-    return checkOperatorOverload2(typeChecker, PrefixUnaryOperatorMethodMap[operator], operand);
+function notSynthetic<T extends Node>(newNode: Mutable<T>, node: Node): T {
+	newNode.flags &= ~NodeFlags.Synthesized;
+	newNode.parent = node.parent;
+	return newNode;
 }
 
-export function checkPostfixUnaryOperatorOverload(operator: PostfixUnaryOperator, operand: Type, typeChecker: TypeChecker): Type | undefined {
-    return checkOperatorOverload2(typeChecker, PostfixUnaryOperatorMethodMap[operator], operand);
+function makeMethodCall(identifier: Identifier, left: Expression, args: Expression[]): Expression {
+	const access = factory.createPropertyAccessExpression(left, identifier);
+	const call = factory.createCallExpression(
+		access,
+		/*typeArguments*/ undefined,
+		args,
+	);
+	(access as Mutable<Node>).parent = call;
+	return call;
 }
 
-export function checkBinaryOperatorOverload(operator: BinaryOperator, left: Type, right: Type, typeChecker: TypeChecker): Type | undefined {
-    const methodNames = BinaryOperatorMethodMap[operator];
-    if (methodNames)
-        return (
-            ((left.flags & TypeFlags.Object) && checkOperatorOverload2(typeChecker, methodNames[0], left, right))
-            || (methodNames[1] && (right.flags & TypeFlags.Object) && checkOperatorOverload2(typeChecker, methodNames[1], right, left))
-            || undefined
-        );
-}
-
-function fixNode<T extends Node>(newNode: T, node: Node): T {
-    return setTextRange(setOriginalNode(newNode, node), node);
-}
-
-/**
- * Transform operator overloading expressions.
- * Transforms X + Y into X.add(Y) for non-primitive types.
- */
 export function transformOperatorOverloading(context: TransformationContext, typeChecker: TypeChecker): Transformer<SourceFile | Bundle> {
     return (node: SourceFile | Bundle) => visitNode(node, visitor) as SourceFile;
 
     function visitor(node: Node): Node {
         node = visitEachChild(node, visitor, context);
 
-        if (node.kind === SyntaxKind.BinaryExpression)
-            return visitBinaryExpression(node as BinaryExpression);
+        if (isBinaryExpression(node))
+            return transformBinaryExpression(node);
 
-        if (node.kind === SyntaxKind.PrefixUnaryExpression)
-            return visitPrefixUnaryExpression(node as PrefixUnaryExpression);
-        
-        if (node.kind === SyntaxKind.PostfixUnaryExpression)
-            return visitPostfixUnaryExpression(node as PostfixUnaryExpression);
-        
+        if (isPrefixUnaryExpression(node))
+	        return transformUnaryExpression(node, PrefixUnaryOperatorMethodMap[node.operator]);
+
+        if (isPostfixUnaryExpression(node))
+            return transformUnaryExpression(node, PostfixUnaryOperatorMethodMap[node.operator]);
+
         return node;
     }
 
-    function visitBinaryExpression(node: BinaryExpression): Expression {
+    function transformBinaryExpression(node: BinaryExpression): Expression {
         const operator      = node.operatorToken.kind;
         const methodNames   = BinaryOperatorMethodMap[operator];
         if (!methodNames)
             return node;
 
-        const leftType = typeChecker.getTypeAtLocation(node.left);
+        const leftType	= typeChecker.getTypeAtLocation(node.left);
         const rightType = typeChecker.getTypeAtLocation(node.right);
         
-        function try1way(methodName: string, leftType: Type, rightType: Type, left:Expression, right:Expression): Expression|undefined {
-            if (leftType.flags & TypeFlags.Object) {
-                const signature = checkOperatorOverload(typeChecker, methodName, leftType, rightType);
-                if (signature) {  // Transform X + Y into X.add(Y)
-                    return fixNode(factory.createMethodCall(
-                        left,
-                        signatureIdentifier(signature)!,
-                        [right]
-                    ), node);
-                }
-            }
+	  	// Transform X + Y into X.add(Y)
+        function try1way(methodName: string, leftType: Type, rightType: Type, left: Expression, right: Expression): Expression|undefined {
+            const signature = checkOperatorOverload(typeChecker, methodName, leftType, rightType);
+            if (signature)
+				return notSynthetic(makeMethodCall(signatureIdentifier(signature)!, left, [right]), node);;
         }
 
-        function try2ways(methodNames: string[]): Expression|undefined {
-            return try1way(methodNames[0], leftType, rightType, node.left, node.right)
-                ?? ((methodNames[1] && try1way(methodNames[1], rightType, leftType, node.right, node.left)) || undefined);
+        function try2ways(methodNames: string[], leftType: Type, rightType: Type, left:Expression, right:Expression): Expression|undefined {
+			return try1way(methodNames[0], leftType, rightType, left, right)
+				|| try1way(methodNames[1], rightType, leftType, right, left);
         }
 
-        function tryCmp(operator: BinaryOperator, leftType: Type, rightType: Type, left:Expression, right:Expression): Expression|undefined {
-            const compNode = try1way("cmp", leftType, rightType, left, right);
-            if (compNode) {
-                // Transform X < Y into X.cmp(Y) < 0
-                return fixNode(factory.createBinaryExpression(
-                    compNode,
-                    operator,
-                    factory.createNumericLiteral("0")
-                ), node);
-            }
+		// Transform X < Y into X.cmp(Y) < 0
+        function tryCmp(operator: BinaryOperator|undefined, leftType: Type, rightType: Type, left:Expression, right:Expression): Expression|undefined {
+			if (operator) {
+				const compNode = try1way("cmp", leftType, rightType, left, right);
+				if (compNode) {
+					return factory.createBinaryExpression(
+						compNode,
+						operator,
+						factory.createNumericLiteral("0")
+					);
+				}
+			}
         }
 
-        const newNode = try2ways(methodNames);
+        const newNode = try2ways(methodNames, leftType, rightType, node.left, node.right);
         if (newNode) {
-            // Successfully transformed
             if (isAssignmentOperator(operator))
-                return fixNode(factory.createAssignment(node.left, newNode), node);
+                return factory.createAssignment(node.left, newNode);
             return newNode;
         }
 
         // If relational operator, try inverse and negate result
         const invOp = inverseOperator(operator);
         if (invOp) {
-            const invMethodNames = BinaryOperatorMethodMap[invOp];
-            if (invMethodNames) {
-                const notValue = try2ways(invMethodNames);
-                if (notValue)
-                    return fixNode(factory.createLogicalNot(notValue), node);
-            }
+			const notNode = try2ways(BinaryOperatorMethodMap[invOp], leftType, rightType, node.left, node.right);
+			if (notNode)
+				return factory.createLogicalNot(notNode);
             
-            // Try cmp method if available, e.g. X < Y => X.cmp(Y) < 0
-            const compNode1 = tryCmp(operator, leftType, rightType, node.left, node.right);
-            if (compNode1)
-                return compNode1;
+            // Try cmp method if available, e.g. X < Y => X.cmp(Y) < 0, then try reversing operator and operands, e.g. X < Y => Y.cmp(X) > 0
+            const compNode = tryCmp(operator, leftType, rightType, node.left, node.right)
+						|| 	 tryCmp(reverseOperator(operator), rightType, leftType, node.right, node.left);
 
-            // If not found, try reversing operator and operands, e.g. X < Y => Y.cmp(X) > 0
-            const flipOp = reverseOperator(operator);
-            if (flipOp) {
-                const compNode2 = tryCmp(flipOp, rightType, leftType, node.right, node.left);
-                if (compNode2)
-                    return compNode2;}
+            if (compNode)
+                return compNode;
         }
 
         return node;
     }
 
-    function visitPrefixUnaryExpression(node: PrefixUnaryExpression): Expression {
-        const methodName = PrefixUnaryOperatorMethodMap[node.operator];
-        const type = typeChecker.getTypeAtLocation(node.operand);
-
-        if (methodName && (type.flags & TypeFlags.Object)) {
-            const signature = checkOperatorOverload(typeChecker, methodName, type);
-            if (signature) {
-                // Transform -X into X.neg()
-                return fixNode(factory.createMethodCall(
-                    node.operand,
-                    signatureIdentifier(signature)!,
-                    []
-                ), node);
-            }
-        }
-
-        return node;
-    }
-    function visitPostfixUnaryExpression(node: PostfixUnaryExpression): Expression {
-        const methodName = PostfixUnaryOperatorMethodMap[node.operator];
-        const type = typeChecker.getTypeAtLocation(node.operand);
-
-        if (methodName && (type.flags & TypeFlags.Object)) {
-            const signature = checkOperatorOverload(typeChecker, methodName, type);
-            if (signature) {
-                // Transform X++ into X.inc()
-                return fixNode(factory.createMethodCall(
-                    node.operand,
-                    signatureIdentifier(signature)!,
-                    []
-                ), node);
-            }
-        }
-        
-        return node;
-    }
+    function transformUnaryExpression(node: PrefixUnaryExpression|PostfixUnaryExpression, methodName: string): Expression {
+		const signature = checkOperatorOverload(typeChecker, methodName, typeChecker.getTypeAtLocation(node.operand));
+		if (signature)
+			// Transform -X into X.neg()
+			return notSynthetic(makeMethodCall(signatureIdentifier(signature)!, node.operand, []), node);
+		return node;
+	}
 }

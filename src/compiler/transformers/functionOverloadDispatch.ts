@@ -21,13 +21,13 @@ import {
     visitEachChild,
     visitNode,
     MethodDeclaration,
+    Declaration,
     isMethodDeclaration,
     PropertyName,
     ParameterDeclaration,
     NodeArray,
     getTextOfPropertyName,
     isPropertyAccessExpression,
-    Expression,
     SignatureKind,
     getJSDocTags,
 } from "../_namespaces/ts.js";
@@ -44,10 +44,10 @@ const simpleNames: [TypeFlags, string][] = [
     [TypeFlags.Unknown,     "x"],
     [TypeFlags.Never,       "-"],
 ];
- 
-export function transformFunctionOverloadDispatch(context: TransformationContext, typeChecker: TypeChecker): Transformer<SourceFile | Bundle> {
-    return (node: SourceFile | Bundle) => visitNode(node, visitor) as SourceFile;
 
+
+// Generate a mangled name for a function implementation based on its parameter types
+function generateMangledName(typeChecker: TypeChecker, name: PropertyName, params: NodeArray<ParameterDeclaration> | ParameterDeclaration[]): string {
     function Types(types: readonly Type[]): string {
         if (types.length === 0)
             return "_";
@@ -115,95 +115,33 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
         return "?";
     }
 
-    // Generate a mangled name for a function implementation based on its parameter types
-    function generateMangledName(name: PropertyName, params: NodeArray<ParameterDeclaration> | ParameterDeclaration[]): string {
-        const baseName = getTextOfPropertyName(name).toString();
-        return [baseName, ...params.map(param => getTypeNameFromType(typeChecker.getTypeAtLocation(param.name)))].join('$');
-    }
+    const baseName = getTextOfPropertyName(name).toString();
+    return [baseName, ...params.map(param => getTypeNameFromType(typeChecker.getTypeAtLocation(param.name)))].join('$');
+}
 
-    function getImplementations(node: Node) {
-        const symbol = typeChecker.getSymbolAtLocation(node);
-        return (symbol?.declarations ?? []).filter(decl => ((isFunctionDeclaration(decl) || isMethodDeclaration(decl)) && decl.body) || getJSDocTags(decl).some(tag => tag.tagName.escapedText === "functionOverloadDispatch")) as (FunctionDeclaration | MethodDeclaration)[];
-    }
+function getImplementations(declarations: Declaration[]) {
+    return declarations.filter(decl => ((isFunctionDeclaration(decl) || isMethodDeclaration(decl)) && decl.body) || getJSDocTags(decl).some(tag => tag.tagName.escapedText === "functionOverloadDispatch")) as (FunctionDeclaration | MethodDeclaration)[];
+}
 
-    // Find the appropriate implementation function for a call expression based on matching the arguments to available function signatures
-    function findImplementationForCall(implementations: (FunctionDeclaration|MethodDeclaration)[], args0: NodeArray<Expression> | Expression[]) {
-        if (implementations.length < 2)
-            return undefined;
+export function transformFunctionOverloadDispatch(context: TransformationContext, checker: TypeChecker): Transformer<SourceFile | Bundle> {
+    return (node: SourceFile | Bundle) => visitNode(node, visitor) as SourceFile;
 
-        // Get all argument types
-        const args = args0.map(arg => typeChecker.getTypeAtLocation(arg));
-        
-        // Filter to function declarations with bodies and matching parameters
-        const candidates = implementations.filter(decl =>
-            decl.parameters.length === args.length
-            && !args.some((arg, i) => !typeChecker.isTypeAssignableTo(arg, typeChecker.getTypeAtLocation(decl.parameters[i].name)))
-        );
-
-        if (candidates.length) {
-            let bestCandidate = candidates[0];
-
-            if (candidates.length > 1) {
-                let bestSpecificity = -1;
-                for (const candidate of candidates) {
-                    const specificity = args.reduce(
-                        (total, arg, i) => total + getTypeSpecificity(typeChecker.getTypeAtLocation(candidate.parameters[i].name), arg),
-                    0);
-
-                    if (specificity > bestSpecificity) {
-                        bestSpecificity = specificity;
-                        bestCandidate = candidate;
-                    }
-                }
-            }
-            return bestCandidate;
+    function isOverloaded(node: Node): boolean {
+        const symbol = checker.getSymbolAtLocation(node);
+        if (symbol) {
+            const type = checker.getTypeOfSymbolAtLocation(symbol, node);
+            const signatures = checker.getSignaturesOfType(type, SignatureKind.Call);
+            return getImplementations(signatures.map(sig => sig.declaration!)).length > 1;
         }
-        
-        return undefined;
+        return false;
     }
-    
-    // Calculate how specific a parameter type is relative to an argument type
-    // Higher scores = more specific = better match
-    function getTypeSpecificity(paramType?: Type, argType?: Type): number {
-        if (!paramType || !argType)
-            return 0;
 
-        // Exact type match gets highest score
-        if (paramType === argType)
-            return 1000;
-        
-        if (paramType.flags & TypeFlags.Any)
-            return 10; // 'any' is least specific
-
-        if (paramType.flags & TypeFlags.Unknown)
-            return 20; // 'unknown' is slightly more specific than 'any'
-
-        if (paramType.flags & (TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean))
-            return 500; // Primitive types are quite specific
-        
-        if (paramType.flags & TypeFlags.Object) {
-            let score = 300; // Object types are moderately specific
-            // Array types get bonus points for element type specificity
-            if (typeChecker.isArrayType(paramType) && typeChecker.isArrayType(argType))
-                score += getTypeSpecificity(typeChecker.getElementTypeOfArrayType(paramType), typeChecker.getElementTypeOfArrayType(argType)) / 10;
-            return score;
-        }
-        if (paramType.flags & TypeFlags.Union) {
-            // Narrower unions are more specific than wider unions
-            const unionType = paramType as UnionType;
-            return 200 - unionType.types.length * 10; // Fewer union members = more specific
-        }
-        
-        return 0;
-    }
-    
     function visitor(node: Node): Node {
         node = visitEachChild(node, visitor, context);
 
         if (isFunctionDeclaration(node)) {
-            const implementations = getImplementations(node.name!);
-            if (implementations.length > 1) { // More than one implementation
-                const mangledName = generateMangledName(node.name!, node.parameters);
+            if (isOverloaded(node.name!)) {
+                const mangledName = generateMangledName(checker, node.name!, node.parameters);
                 return factory.createFunctionDeclaration(
                     node.modifiers,
                     node.asteriskToken,
@@ -216,38 +154,9 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
             }
         }
         
-        if (isCallExpression(node)) {
-            // Only handle calls to identifiers (simple function calls)
-            if (isIdentifier(node.expression)) {
-                const decl = findImplementationForCall(getImplementations(node.expression), node.arguments);
-                if (decl) {
-                    const mangledName = generateMangledName(decl.name!, decl.parameters);
-                    const newExpression = factory.createIdentifier(mangledName);
-                    return factory.createCallExpression(
-                        newExpression,
-                        node.typeArguments,
-                        node.arguments
-                    );
-                }
-
-            } else if (isPropertyAccessExpression(node.expression)) {
-                const decl = findImplementationForCall(getImplementations(node.expression.name), node.arguments);//.slice(1));
-                if (decl) {
-                    const mangledName = generateMangledName(decl.name!, decl.parameters);//.slice(1));
-                    const newExpression = factory.createPropertyAccessExpression(node.expression.expression, factory.createIdentifier(mangledName));
-                    return factory.createCallExpression(
-                        newExpression,
-                        node.typeArguments,
-                        node.arguments
-                    );
-                }
-            }
-        }
-
         if (isMethodDeclaration(node)) {
-            const implementations = getImplementations(node.name);
-            if (implementations.length > 1) { // More than one implementation
-                const mangledName = generateMangledName(node.name, node.parameters);
+            if (isOverloaded(node.name)) {
+                const mangledName = generateMangledName(checker, node.name, node.parameters);
                 return factory.createMethodDeclaration(
                     node.modifiers,
                     node.asteriskToken,
@@ -258,6 +167,21 @@ export function transformFunctionOverloadDispatch(context: TransformationContext
                     node.type,
                     node.body
                 );
+            }
+        }
+
+        if (isCallExpression(node) && (isIdentifier(node.expression) || isPropertyAccessExpression(node.expression))) {
+            const id = isIdentifier(node.expression) ? node.expression : node.expression.name;
+            if (isOverloaded(id)) {
+                const sig = checker.getResolvedSignature(node);
+                if (sig && sig.declaration && (isFunctionDeclaration(sig.declaration) || isMethodDeclaration(sig.declaration))) {
+                    const mangledIdentifier = factory.createIdentifier(generateMangledName(checker, sig.declaration.name!, sig.declaration.parameters));
+                    return factory.createCallExpression(
+                        isIdentifier(node.expression) ? mangledIdentifier : factory.createPropertyAccessExpression(node.expression.expression, mangledIdentifier),
+                        node.typeArguments,
+                        node.arguments
+                    );
+                }
             }
         }
 

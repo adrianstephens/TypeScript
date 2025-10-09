@@ -78,12 +78,18 @@ class Point implements Addable<Point> {
     lt(other: Point): boolean {
         return this.x < other.x && this.y < other.y;
     }
+    lt(other: number): boolean {
+        return this.x < other && this.y < other;
+    }
     
     le(other: Point): boolean {
         return this.x <= other.x && this.y <= other.y;
     }
     
-    gt(other: Point): boolean {
+    gt(other: Point|number): boolean {
+        if (typeof other === "number") {
+            return this.x > other && this.y > other;
+        }
         return this.x > other.x && this.y > other.y;
     }
     
@@ -135,6 +141,8 @@ const isLess = p1 < p2;     // Should become: p1.lt(p2)
 const isLessEq = p1 <= p2;  // Should become: p1.le(p2)
 const isGreater = p1 > p2;  // Should become: p1.gt(p2)
 const isGreaterEq = p1 >= p2; // Should become: p1.ge(p2)
+const isLess1 = p1 < 1;     // Should become: p1.lt(1)
+const isLess2 = 1 < p1;     // Should become: p1.gt(1)
 
 // Compound assignment operators
 let p12 = new Point(0, 0);
