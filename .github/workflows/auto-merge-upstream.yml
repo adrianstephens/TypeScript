@@ -30,18 +30,13 @@ jobs:
           git merge upstream/main
 
       - name: Push merged changes to main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: git push origin HEAD:main
-
+        run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/adrianstephens/TypeScript.git HEAD:main
+          
       - name: Merge operators into main
-        run: |
-          git merge origin/operators
+        run: git merge origin/operators
 
       - name: Push merged changes to operators
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: git push origin HEAD:operators
+        run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/adrianstephens/TypeScript.git HEAD:operators
 
       - name: Checkout operators branch
         run: git checkout operators
@@ -62,8 +57,6 @@ jobs:
 
       - name: Publish to npm
         if: success()
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
           npm publish --access public
