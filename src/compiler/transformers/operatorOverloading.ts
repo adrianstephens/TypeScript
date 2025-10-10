@@ -21,8 +21,6 @@ import {
     Identifier,
     Signature,
     isIdentifier,
-    setOriginalNode,
-    setTextRange,
 	Mutable,
     visitNode,
 	isPrefixUnaryExpression,
