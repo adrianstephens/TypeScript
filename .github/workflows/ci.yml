@@ -267,7 +267,7 @@ jobs:
       - run: |
           node ./scripts/addPackageJsonGitHead.mjs package.json
           npm pack
-          mv typescript*.tgz typescript.tgz
+          mv *.tgz typescript.tgz
           echo "package=$PWD/typescript.tgz" >> "$GITHUB_OUTPUT"
         id: pack
 
