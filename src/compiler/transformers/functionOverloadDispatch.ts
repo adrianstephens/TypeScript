@@ -120,7 +120,10 @@ function generateMangledName(typeChecker: TypeChecker, name: PropertyName, param
 }
 
 function getImplementations(declarations: Declaration[]) {
-    return declarations.filter(decl => ((isFunctionDeclaration(decl) || isMethodDeclaration(decl)) && decl.body) || getJSDocTags(decl).some(tag => tag.tagName.escapedText === "functionOverloadDispatch")) as (FunctionDeclaration | MethodDeclaration)[];
+    return declarations.filter(decl =>
+        ((isFunctionDeclaration(decl) || isMethodDeclaration(decl)) && decl.body)
+        || getJSDocTags(decl).some(tag => tag.tagName.escapedText === "functionOverloadDispatch")
+    ) as (FunctionDeclaration | MethodDeclaration)[];
 }
 
 export function transformFunctionOverloadDispatch(context: TransformationContext, checker: TypeChecker): Transformer<SourceFile | Bundle> {
