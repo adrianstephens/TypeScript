@@ -552,6 +552,11 @@ Enable experimental support for legacy experimental decorators.
 type: boolean
 default: false
 
+[94m--functionOverloadDispatch[39m
+Enable compile-time function overload dispatch
+type: boolean
+default: false
+
 [94m--jsx[39m
 Specify what JSX code is generated.
 one of: preserve, react, react-native, react-jsx, react-jsxdev
@@ -589,6 +594,11 @@ default: "auto": Treat files with imports, exports, import.meta, jsx (with jsx: 
 
 [94m--noLib[39m
 Disable including any library files, including the default lib.d.ts.
+type: boolean
+default: false
+
+[94m--operatorOverloading[39m
+Enable operator overloading for user-defined types
 type: boolean
 default: false
 

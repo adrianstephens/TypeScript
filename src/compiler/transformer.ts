@@ -72,8 +72,11 @@ import {
     transformSystemModule,
     transformTypeScript,
     VariableDeclaration,
+    TypeChecker,
 } from "./_namespaces/ts.js";
 import * as performance from "./_namespaces/ts.performance.js";
+import {transformOperatorOverloading} from "./transformers/operatorOverloading.js";
+import {transformFunctionOverloadDispatch} from "./transformers/functionOverloadDispatch.js";
 
 function getModuleTransformer(moduleKind: ModuleKind): TransformerFactory<SourceFile | Bundle> {
     switch (moduleKind) {
@@ -117,14 +120,14 @@ const enum SyntaxKindFeatureFlags {
 export const noTransformers: EmitTransformers = { scriptTransformers: emptyArray, declarationTransformers: emptyArray };
 
 /** @internal */
-export function getTransformers(compilerOptions: CompilerOptions, customTransformers?: CustomTransformers, emitOnly?: boolean | EmitOnly): EmitTransformers {
+export function getTransformers(compilerOptions: CompilerOptions, typeChecker: TypeChecker, customTransformers?: CustomTransformers, emitOnly?: boolean | EmitOnly): EmitTransformers {
     return {
-        scriptTransformers: getScriptTransformers(compilerOptions, customTransformers, emitOnly),
+        scriptTransformers: getScriptTransformers(compilerOptions, typeChecker, customTransformers, emitOnly),
         declarationTransformers: getDeclarationTransformers(customTransformers),
     };
 }
 
-function getScriptTransformers(compilerOptions: CompilerOptions, customTransformers?: CustomTransformers, emitOnly?: boolean | EmitOnly) {
+function getScriptTransformers(compilerOptions: CompilerOptions, typeChecker: TypeChecker, customTransformers?: CustomTransformers, emitOnly?: boolean | EmitOnly) {
     if (emitOnly) return emptyArray;
 
     const languageVersion = getEmitScriptTarget(compilerOptions);
@@ -135,6 +138,14 @@ function getScriptTransformers(compilerOptions: CompilerOptions, customTransform
     addRange(transformers, customTransformers && map(customTransformers.before, wrapScriptTransformerFactory));
 
     transformers.push(transformTypeScript);
+
+    if (compilerOptions.operatorOverloading) {
+        transformers.push((context) => transformOperatorOverloading(context, typeChecker));
+    }
+
+    if (compilerOptions.functionOverloadDispatch) {
+        transformers.push((context) => transformFunctionOverloadDispatch(context, typeChecker));
+    }
 
     if (compilerOptions.experimentalDecorators) {
         transformers.push(transformLegacyDecorators);

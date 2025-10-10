@@ -1,0 +1,548 @@
+//// [tests/cases/compiler/functionOverloadDispatch.ts] ////
+
+=== functionOverloadDispatch.ts ===
+// Test automatic function overload dispatch transformation
+
+// Basic function overloads with primitive types
+function processValue(value: string): string {
+>processValue : { (value: string): string; (value: number): string; (value: boolean): string; }
+>             : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>value : string
+>      : ^^^^^^
+
+    return "String: " + value;
+>"String: " + value : string
+>                   : ^^^^^^
+>"String: " : "String: "
+>           : ^^^^^^^^^^
+>value : string
+>      : ^^^^^^
+}
+
+function processValue(value: number): string {
+>processValue : { (value: string): string; (value: number): string; (value: boolean): string; }
+>             : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>value : number
+>      : ^^^^^^
+
+    return "Number: " + value;
+>"Number: " + value : string
+>                   : ^^^^^^
+>"Number: " : "Number: "
+>           : ^^^^^^^^^^
+>value : number
+>      : ^^^^^^
+}
+
+function processValue(value: boolean): string {
+>processValue : { (value: string): string; (value: number): string; (value: boolean): string; }
+>             : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>value : boolean
+>      : ^^^^^^^
+
+    return "Boolean: " + value;
+>"Boolean: " + value : string
+>                    : ^^^^^^
+>"Boolean: " : "Boolean: "
+>            : ^^^^^^^^^^^
+>value : boolean
+>      : ^^^^^^^
+}
+
+// Array type overloads
+function handleArray(items: string[]): string {
+>handleArray : { (items: string[]): string; (items: number[]): string; (items: boolean[]): string; }
+>            : ^^^     ^^        ^^^      ^^^     ^^        ^^^      ^^^     ^^         ^^^      ^^^
+>items : string[]
+>      : ^^^^^^^^
+
+    return "Strings: " + items.join(", ");
+>"Strings: " + items.join(", ") : string
+>                               : ^^^^^^
+>"Strings: " : "Strings: "
+>            : ^^^^^^^^^^^
+>items.join(", ") : string
+>                 : ^^^^^^
+>items.join : (separator?: string) => string
+>           : ^         ^^^      ^^^^^      
+>items : string[]
+>      : ^^^^^^^^
+>join : (separator?: string) => string
+>     : ^         ^^^      ^^^^^      
+>", " : ", "
+>     : ^^^^
+}
+
+function handleArray(items: number[]): string {
+>handleArray : { (items: string[]): string; (items: number[]): string; (items: boolean[]): string; }
+>            : ^^^     ^^        ^^^      ^^^     ^^        ^^^      ^^^     ^^         ^^^      ^^^
+>items : number[]
+>      : ^^^^^^^^
+
+    return "Numbers: " + items.map(n => n.toString()).join(", ");
+>"Numbers: " + items.map(n => n.toString()).join(", ") : string
+>                                                      : ^^^^^^
+>"Numbers: " : "Numbers: "
+>            : ^^^^^^^^^^^
+>items.map(n => n.toString()).join(", ") : string
+>                                        : ^^^^^^
+>items.map(n => n.toString()).join : (separator?: string) => string
+>                                  : ^         ^^^      ^^^^^      
+>items.map(n => n.toString()) : string[]
+>                             : ^^^^^^^^
+>items.map : <U>(callbackfn: (value: number, index: number, array: number[]) => U, thisArg?: any) => U[]
+>          : ^ ^^          ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^       ^^^   ^^^^^^^^
+>items : number[]
+>      : ^^^^^^^^
+>map : <U>(callbackfn: (value: number, index: number, array: number[]) => U, thisArg?: any) => U[]
+>    : ^ ^^          ^^^     ^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^       ^^^   ^^^^^^^^
+>n => n.toString() : (n: number) => string
+>                  : ^ ^^^^^^^^^^^^^^^^^^^
+>n : number
+>  : ^^^^^^
+>n.toString() : string
+>             : ^^^^^^
+>n.toString : (radix?: number) => string
+>           : ^     ^^^      ^^^^^      
+>n : number
+>  : ^^^^^^
+>toString : (radix?: number) => string
+>         : ^     ^^^      ^^^^^      
+>join : (separator?: string) => string
+>     : ^         ^^^      ^^^^^      
+>", " : ", "
+>     : ^^^^
+}
+
+function handleArray(items: boolean[]): string {
+>handleArray : { (items: string[]): string; (items: number[]): string; (items: boolean[]): string; }
+>            : ^^^     ^^        ^^^      ^^^     ^^        ^^^      ^^^     ^^         ^^^      ^^^
+>items : boolean[]
+>      : ^^^^^^^^^
+
+    return "Booleans: " + items.map(b => b.toString()).join(", ");
+>"Booleans: " + items.map(b => b.toString()).join(", ") : string
+>                                                       : ^^^^^^
+>"Booleans: " : "Booleans: "
+>             : ^^^^^^^^^^^^
+>items.map(b => b.toString()).join(", ") : string
+>                                        : ^^^^^^
+>items.map(b => b.toString()).join : (separator?: string) => string
+>                                  : ^         ^^^      ^^^^^      
+>items.map(b => b.toString()) : string[]
+>                             : ^^^^^^^^
+>items.map : <U>(callbackfn: (value: boolean, index: number, array: boolean[]) => U, thisArg?: any) => U[]
+>          : ^ ^^          ^^^     ^^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^^       ^^^   ^^^^^^^^
+>items : boolean[]
+>      : ^^^^^^^^^
+>map : <U>(callbackfn: (value: boolean, index: number, array: boolean[]) => U, thisArg?: any) => U[]
+>    : ^ ^^          ^^^     ^^^^^^^^^^^     ^^      ^^     ^^^^^^^^^^^^^^^^^^^       ^^^   ^^^^^^^^
+>b => b.toString() : (b: boolean) => string
+>                  : ^ ^^^^^^^^^^^^^^^^^^^^
+>b : boolean
+>  : ^^^^^^^
+>b.toString() : string
+>             : ^^^^^^
+>b.toString : () => string
+>           : ^^^^^^      
+>b : boolean
+>  : ^^^^^^^
+>toString : () => string
+>         : ^^^^^^      
+>join : (separator?: string) => string
+>     : ^         ^^^      ^^^^^      
+>", " : ", "
+>     : ^^^^
+}
+
+// Interface-based overloads
+interface User {
+    name: string;
+>name : string
+>     : ^^^^^^
+}
+
+interface Product {
+    id: number;
+>id : number
+>   : ^^^^^^
+
+    price: number;
+>price : number
+>      : ^^^^^^
+}
+
+function transform(obj: User): string {
+>transform : { (obj: User): string; (obj: Product): string; }
+>          : ^^^   ^^    ^^^      ^^^   ^^       ^^^      ^^^
+>obj : User
+>    : ^^^^
+
+    return `User: ${obj.name}`;
+>`User: ${obj.name}` : string
+>                    : ^^^^^^
+>obj.name : string
+>         : ^^^^^^
+>obj : User
+>    : ^^^^
+>name : string
+>     : ^^^^^^
+}
+
+function transform(obj: Product): string {
+>transform : { (obj: User): string; (obj: Product): string; }
+>          : ^^^   ^^    ^^^      ^^^   ^^       ^^^      ^^^
+>obj : Product
+>    : ^^^^^^^
+
+    return `Product #${obj.id}: $${obj.price}`;
+>`Product #${obj.id}: $${obj.price}` : string
+>                                    : ^^^^^^
+>obj.id : number
+>       : ^^^^^^
+>obj : Product
+>    : ^^^^^^^
+>id : number
+>   : ^^^^^^
+>obj.price : number
+>          : ^^^^^^
+>obj : Product
+>    : ^^^^^^^
+>price : number
+>      : ^^^^^^
+}
+
+// Class method overloads
+class DataProcessor {
+>DataProcessor : DataProcessor
+>              : ^^^^^^^^^^^^^
+
+    constructor(public prefix: string) {}
+>prefix : string
+>       : ^^^^^^
+    
+    process(value: string): string {
+>process : { (value: string): string; (value: number): string; (value: boolean): string; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>value : string
+>      : ^^^^^^
+
+        return this.prefix + "String: " + value;
+>this.prefix + "String: " + value : string
+>                                 : ^^^^^^
+>this.prefix + "String: " : string
+>                         : ^^^^^^
+>this.prefix : string
+>            : ^^^^^^
+>this : this
+>     : ^^^^
+>prefix : string
+>       : ^^^^^^
+>"String: " : "String: "
+>           : ^^^^^^^^^^
+>value : string
+>      : ^^^^^^
+    }
+
+    process(value: number): string {
+>process : { (value: string): string; (value: number): string; (value: boolean): string; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>value : number
+>      : ^^^^^^
+
+        return this.prefix + "Number: " + value;
+>this.prefix + "Number: " + value : string
+>                                 : ^^^^^^
+>this.prefix + "Number: " : string
+>                         : ^^^^^^
+>this.prefix : string
+>            : ^^^^^^
+>this : this
+>     : ^^^^
+>prefix : string
+>       : ^^^^^^
+>"Number: " : "Number: "
+>           : ^^^^^^^^^^
+>value : number
+>      : ^^^^^^
+    }
+
+    process(value: boolean): string {
+>process : { (value: string): string; (value: number): string; (value: boolean): string; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>value : boolean
+>      : ^^^^^^^
+
+        return this.prefix + "Boolean: " + value;
+>this.prefix + "Boolean: " + value : string
+>                                  : ^^^^^^
+>this.prefix + "Boolean: " : string
+>                          : ^^^^^^
+>this.prefix : string
+>            : ^^^^^^
+>this : this
+>     : ^^^^
+>prefix : string
+>       : ^^^^^^
+>"Boolean: " : "Boolean: "
+>            : ^^^^^^^^^^^
+>value : boolean
+>      : ^^^^^^^
+    }
+}
+
+// Generic function overloads
+function convert(value: string): number {
+>convert : { (value: string): number; (value: number): string; (value: boolean): number; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>value : string
+>      : ^^^^^^
+
+    return value.length;
+>value.length : number
+>             : ^^^^^^
+>value : string
+>      : ^^^^^^
+>length : number
+>       : ^^^^^^
+}
+
+function convert(value: number): string {
+>convert : { (value: string): number; (value: number): string; (value: boolean): number; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>value : number
+>      : ^^^^^^
+
+    return value.toString();
+>value.toString() : string
+>                 : ^^^^^^
+>value.toString : (radix?: number) => string
+>               : ^     ^^^      ^^^^^      
+>value : number
+>      : ^^^^^^
+>toString : (radix?: number) => string
+>         : ^     ^^^      ^^^^^      
+}
+
+function convert(value: boolean): number {
+>convert : { (value: string): number; (value: number): string; (value: boolean): number; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>value : boolean
+>      : ^^^^^^^
+
+    return value ? 1 : 0;
+>value ? 1 : 0 : 0 | 1
+>              : ^^^^^
+>value : boolean
+>      : ^^^^^^^
+>1 : 1
+>  : ^
+>0 : 0
+>  : ^
+}
+
+// Usage examples - should be automatically dispatched to specific implementations
+const result1 = processValue("hello");
+>result1 : string
+>        : ^^^^^^
+>processValue("hello") : string
+>                      : ^^^^^^
+>processValue : { (value: string): string; (value: number): string; (value: boolean): string; }
+>             : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>"hello" : "hello"
+>        : ^^^^^^^
+
+const result2 = processValue(42);
+>result2 : string
+>        : ^^^^^^
+>processValue(42) : string
+>                 : ^^^^^^
+>processValue : { (value: string): string; (value: number): string; (value: boolean): string; }
+>             : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>42 : 42
+>   : ^^
+
+const result3 = processValue(true);
+>result3 : string
+>        : ^^^^^^
+>processValue(true) : string
+>                   : ^^^^^^
+>processValue : { (value: string): string; (value: number): string; (value: boolean): string; }
+>             : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>true : true
+>     : ^^^^
+
+const arrayResult1 = handleArray(["a", "b", "c"]);
+>arrayResult1 : string
+>             : ^^^^^^
+>handleArray(["a", "b", "c"]) : string
+>                             : ^^^^^^
+>handleArray : { (items: string[]): string; (items: number[]): string; (items: boolean[]): string; }
+>            : ^^^     ^^        ^^^      ^^^     ^^        ^^^      ^^^     ^^         ^^^      ^^^
+>["a", "b", "c"] : string[]
+>                : ^^^^^^^^
+>"a" : "a"
+>    : ^^^
+>"b" : "b"
+>    : ^^^
+>"c" : "c"
+>    : ^^^
+
+const arrayResult2 = handleArray([1, 2, 3]);
+>arrayResult2 : string
+>             : ^^^^^^
+>handleArray([1, 2, 3]) : string
+>                       : ^^^^^^
+>handleArray : { (items: string[]): string; (items: number[]): string; (items: boolean[]): string; }
+>            : ^^^     ^^        ^^^      ^^^     ^^        ^^^      ^^^     ^^         ^^^      ^^^
+>[1, 2, 3] : number[]
+>          : ^^^^^^^^
+>1 : 1
+>  : ^
+>2 : 2
+>  : ^
+>3 : 3
+>  : ^
+
+const arrayResult3 = handleArray([true, false, true]);
+>arrayResult3 : string
+>             : ^^^^^^
+>handleArray([true, false, true]) : string
+>                                 : ^^^^^^
+>handleArray : { (items: string[]): string; (items: number[]): string; (items: boolean[]): string; }
+>            : ^^^     ^^        ^^^      ^^^     ^^        ^^^      ^^^     ^^         ^^^      ^^^
+>[true, false, true] : boolean[]
+>                    : ^^^^^^^^^
+>true : true
+>     : ^^^^
+>false : false
+>      : ^^^^^
+>true : true
+>     : ^^^^
+
+const user: User = { name: "Alice" };
+>user : User
+>     : ^^^^
+>{ name: "Alice" } : { name: string; }
+>                  : ^^^^^^^^^^^^^^^^^
+>name : string
+>     : ^^^^^^
+>"Alice" : "Alice"
+>        : ^^^^^^^
+
+const product: Product = { id: 123, price: 99.99 };
+>product : Product
+>        : ^^^^^^^
+>{ id: 123, price: 99.99 } : { id: number; price: number; }
+>                          : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>id : number
+>   : ^^^^^^
+>123 : 123
+>    : ^^^
+>price : number
+>      : ^^^^^^
+>99.99 : 99.99
+>      : ^^^^^
+
+const userResult = transform(user);
+>userResult : string
+>           : ^^^^^^
+>transform(user) : string
+>                : ^^^^^^
+>transform : { (obj: User): string; (obj: Product): string; }
+>          : ^^^   ^^    ^^^      ^^^   ^^       ^^^      ^^^
+>user : User
+>     : ^^^^
+
+const productResult = transform(product);
+>productResult : string
+>              : ^^^^^^
+>transform(product) : string
+>                   : ^^^^^^
+>transform : { (obj: User): string; (obj: Product): string; }
+>          : ^^^   ^^    ^^^      ^^^   ^^       ^^^      ^^^
+>product : Product
+>        : ^^^^^^^
+
+const processor = new DataProcessor("Processed: ");
+>processor : DataProcessor
+>          : ^^^^^^^^^^^^^
+>new DataProcessor("Processed: ") : DataProcessor
+>                                 : ^^^^^^^^^^^^^
+>DataProcessor : typeof DataProcessor
+>              : ^^^^^^^^^^^^^^^^^^^^
+>"Processed: " : "Processed: "
+>              : ^^^^^^^^^^^^^
+
+const methodResult1 = processor.process("test");
+>methodResult1 : string
+>              : ^^^^^^
+>processor.process("test") : string
+>                          : ^^^^^^
+>processor.process : { (value: string): string; (value: number): string; (value: boolean): string; }
+>                  : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>processor : DataProcessor
+>          : ^^^^^^^^^^^^^
+>process : { (value: string): string; (value: number): string; (value: boolean): string; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>"test" : "test"
+>       : ^^^^^^
+
+const methodResult2 = processor.process(100);
+>methodResult2 : string
+>              : ^^^^^^
+>processor.process(100) : string
+>                       : ^^^^^^
+>processor.process : { (value: string): string; (value: number): string; (value: boolean): string; }
+>                  : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>processor : DataProcessor
+>          : ^^^^^^^^^^^^^
+>process : { (value: string): string; (value: number): string; (value: boolean): string; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>100 : 100
+>    : ^^^
+
+const methodResult3 = processor.process(false);
+>methodResult3 : string
+>              : ^^^^^^
+>processor.process(false) : string
+>                         : ^^^^^^
+>processor.process : { (value: string): string; (value: number): string; (value: boolean): string; }
+>                  : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>processor : DataProcessor
+>          : ^^^^^^^^^^^^^
+>process : { (value: string): string; (value: number): string; (value: boolean): string; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>false : false
+>      : ^^^^^
+
+const converted1 = convert("typescript");
+>converted1 : number
+>           : ^^^^^^
+>convert("typescript") : number
+>                      : ^^^^^^
+>convert : { (value: string): number; (value: number): string; (value: boolean): number; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>"typescript" : "typescript"
+>             : ^^^^^^^^^^^^
+
+const converted2 = convert(42);
+>converted2 : string
+>           : ^^^^^^
+>convert(42) : string
+>            : ^^^^^^
+>convert : { (value: string): number; (value: number): string; (value: boolean): number; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>42 : 42
+>   : ^^
+
+const converted3 = convert(true);
+>converted3 : number
+>           : ^^^^^^
+>convert(true) : number
+>              : ^^^^^^
+>convert : { (value: string): number; (value: number): string; (value: boolean): number; }
+>        : ^^^     ^^      ^^^      ^^^     ^^      ^^^      ^^^     ^^       ^^^      ^^^
+>true : true
+>     : ^^^^
+

@@ -2744,12 +2744,12 @@ export function createProgram(_rootNamesOrOptions: readonly string[] | CreatePro
 
         const emitResult = typeChecker.runWithCancellationToken(
             cancellationToken,
-            () =>
+            (checker) =>
                 emitFiles(
                     emitResolver,
                     getEmitHost(writeFileCallback),
                     sourceFile,
-                    getTransformers(options, customTransformers, emitOnly),
+                    getTransformers(options, checker, customTransformers, emitOnly),
                     emitOnly,
                     /*onlyBuildInfo*/ false,
                     forceDtsEmit,
