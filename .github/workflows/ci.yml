@@ -283,8 +283,9 @@ jobs:
           echo "Testing tsserver..."
           echo '{"seq": 1, "command": "status"}' | npx tsserver
 
-          node $GITHUB_WORKSPACE/scripts/checkModuleFormat.mjs typescript
-          node $GITHUB_WORKSPACE/scripts/checkModuleFormat.mjs typescript/lib/tsserverlibrary
+          PKG_NAME=$(jq -r .name < "$GITHUB_WORKSPACE/package.json")
+          node $GITHUB_WORKSPACE/scripts/checkModuleFormat.mjs "$PKG_NAME"
+          node $GITHUB_WORKSPACE/scripts/checkModuleFormat.mjs "$PKG_NAME/lib/tsserverlibrary"
 
   package-size:
     runs-on: ubuntu-latest
