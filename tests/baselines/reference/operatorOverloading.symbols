@@ -1,0 +1,584 @@
+//// [tests/cases/compiler/operatorOverloading.ts] ////
+
+=== operatorOverloading.ts ===
+// Test operator overloading transformation
+
+// Interface for addable types
+interface Addable<T> {
+>Addable : Symbol(Addable, Decl(operatorOverloading.ts, 0, 0))
+>T : Symbol(T, Decl(operatorOverloading.ts, 3, 18))
+
+    add(other: T): T;
+>add : Symbol(Addable.add, Decl(operatorOverloading.ts, 3, 22))
+>other : Symbol(other, Decl(operatorOverloading.ts, 4, 8))
+>T : Symbol(T, Decl(operatorOverloading.ts, 3, 18))
+>T : Symbol(T, Decl(operatorOverloading.ts, 3, 18))
+}
+
+// Point class with comprehensive operator overloads
+class Point implements Addable<Point> {
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>Addable : Symbol(Addable, Decl(operatorOverloading.ts, 0, 0))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+    constructor(public x: number, public y: number) {}
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    
+    // Addition overloads
+    add(other: number): Point {
+>add : Symbol(Point.add, Decl(operatorOverloading.ts, 9, 54), Decl(operatorOverloading.ts, 14, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 12, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x + other, this.y + other);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 12, 8))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 12, 8))
+    }
+    
+    add(other: Point): Point {
+>add : Symbol(Point.add, Decl(operatorOverloading.ts, 9, 54), Decl(operatorOverloading.ts, 14, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 16, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x + other.x, this.y + other.y);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 16, 8))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 16, 8))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    // Subtraction overloads
+    sub(other: Point): Point {
+>sub : Symbol(Point.sub, Decl(operatorOverloading.ts, 18, 5), Decl(operatorOverloading.ts, 23, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 21, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x - other.x, this.y - other.y);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 21, 8))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 21, 8))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    sub(other: number): Point {
+>sub : Symbol(Point.sub, Decl(operatorOverloading.ts, 18, 5), Decl(operatorOverloading.ts, 23, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 25, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x - other, this.y - other);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 25, 8))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 25, 8))
+    }
+    
+    // Right-hand subtraction (for when Point is on right side)
+    rsub(other: number): Point {
+>rsub : Symbol(Point.rsub, Decl(operatorOverloading.ts, 27, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 30, 9))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(other - this.x, other - this.y);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>other : Symbol(other, Decl(operatorOverloading.ts, 30, 9))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 30, 9))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    // Multiplication overloads
+    mul(other: Point): Point {
+>mul : Symbol(Point.mul, Decl(operatorOverloading.ts, 32, 5), Decl(operatorOverloading.ts, 37, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 35, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x * other.x, this.y * other.y);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 35, 8))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 35, 8))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    mul(other: number): Point {
+>mul : Symbol(Point.mul, Decl(operatorOverloading.ts, 32, 5), Decl(operatorOverloading.ts, 37, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 39, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x * other, this.y * other);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 39, 8))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 39, 8))
+    }
+    
+    // Division overloads
+    div(other: Point): Point {
+>div : Symbol(Point.div, Decl(operatorOverloading.ts, 41, 5), Decl(operatorOverloading.ts, 46, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 44, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x / other.x, this.y / other.y);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 44, 8))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 44, 8))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    div(other: number): Point {
+>div : Symbol(Point.div, Decl(operatorOverloading.ts, 41, 5), Decl(operatorOverloading.ts, 46, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 48, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x / other, this.y / other);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 48, 8))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 48, 8))
+    }
+    
+    // Modulus overload
+    mod(other: Point): Point {
+>mod : Symbol(Point.mod, Decl(operatorOverloading.ts, 50, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 53, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x % other.x, this.y % other.y);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 53, 8))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 53, 8))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    // Logical NOT overload
+    not(): Point {
+>not : Symbol(Point.not, Decl(operatorOverloading.ts, 55, 5))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return new Point(this.x === 0 ? 1 : 0, this.y === 0 ? 1 : 0);
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    // Comparison overloads
+    cmp(other: Point): number {
+>cmp : Symbol(Point.cmp, Decl(operatorOverloading.ts, 60, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 63, 8))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return this.x === other.x ? (this.y - other.y) : (this.x - other.x);
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 63, 8))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 63, 8))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 63, 8))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+    }
+    
+    eq(other: Point): boolean {
+>eq : Symbol(Point.eq, Decl(operatorOverloading.ts, 65, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 67, 7))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return this.x === other.x && this.y === other.y;
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 67, 7))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 67, 7))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    ne(other: Point): boolean {
+>ne : Symbol(Point.ne, Decl(operatorOverloading.ts, 69, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 71, 7))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return this.x !== other.x || this.y !== other.y;
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 71, 7))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 71, 7))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    lt(other: Point): boolean {
+>lt : Symbol(Point.lt, Decl(operatorOverloading.ts, 73, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 75, 7))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return this.x < other.x && this.y < other.y;
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 75, 7))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 75, 7))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    le(other: Point): boolean {
+>le : Symbol(Point.le, Decl(operatorOverloading.ts, 77, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 79, 7))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return this.x <= other.x && this.y <= other.y;
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 79, 7))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 79, 7))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    gt(other: Point): boolean {
+>gt : Symbol(Point.gt, Decl(operatorOverloading.ts, 81, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 83, 7))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return this.x > other.x && this.y > other.y;
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 83, 7))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 83, 7))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+    
+    ge(other: Point): boolean {
+>ge : Symbol(Point.ge, Decl(operatorOverloading.ts, 85, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 87, 7))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+        return this.x >= other.x && this.y >= other.y;
+>this.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other.x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 87, 7))
+>x : Symbol(Point.x, Decl(operatorOverloading.ts, 9, 16))
+>this.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>this : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other.y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+>other : Symbol(other, Decl(operatorOverloading.ts, 87, 7))
+>y : Symbol(Point.y, Decl(operatorOverloading.ts, 9, 33))
+    }
+}
+
+// Vector class for additional testing
+class Vector {
+>Vector : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+
+    constructor(public values: number[]) {}
+>values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+    
+    add(other: Vector): Vector {
+>add : Symbol(Vector.add, Decl(operatorOverloading.ts, 94, 43))
+>other : Symbol(other, Decl(operatorOverloading.ts, 96, 8))
+>Vector : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+>Vector : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+
+        return new Vector(this.values.map((v, i) => v + other.values[i]));
+>Vector : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+>this.values.map : Symbol(Array.map, Decl(lib.es5.d.ts, --, --))
+>this.values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>this : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+>values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>map : Symbol(Array.map, Decl(lib.es5.d.ts, --, --))
+>v : Symbol(v, Decl(operatorOverloading.ts, 97, 43))
+>i : Symbol(i, Decl(operatorOverloading.ts, 97, 45))
+>v : Symbol(v, Decl(operatorOverloading.ts, 97, 43))
+>other.values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 96, 8))
+>values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>i : Symbol(i, Decl(operatorOverloading.ts, 97, 45))
+    }
+    
+    mul(scalar: number): Vector {
+>mul : Symbol(Vector.mul, Decl(operatorOverloading.ts, 98, 5))
+>scalar : Symbol(scalar, Decl(operatorOverloading.ts, 100, 8))
+>Vector : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+
+        return new Vector(this.values.map(v => v * scalar));
+>Vector : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+>this.values.map : Symbol(Array.map, Decl(lib.es5.d.ts, --, --))
+>this.values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>this : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+>values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>map : Symbol(Array.map, Decl(lib.es5.d.ts, --, --))
+>v : Symbol(v, Decl(operatorOverloading.ts, 101, 42))
+>v : Symbol(v, Decl(operatorOverloading.ts, 101, 42))
+>scalar : Symbol(scalar, Decl(operatorOverloading.ts, 100, 8))
+    }
+    
+    eq(other: Vector): boolean {
+>eq : Symbol(Vector.eq, Decl(operatorOverloading.ts, 102, 5))
+>other : Symbol(other, Decl(operatorOverloading.ts, 104, 7))
+>Vector : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+
+        return this.values.every((v, i) => v === other.values[i]);
+>this.values.every : Symbol(Array.every, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+>this.values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>this : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+>values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>every : Symbol(Array.every, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --))
+>v : Symbol(v, Decl(operatorOverloading.ts, 105, 34))
+>i : Symbol(i, Decl(operatorOverloading.ts, 105, 36))
+>v : Symbol(v, Decl(operatorOverloading.ts, 105, 34))
+>other.values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>other : Symbol(other, Decl(operatorOverloading.ts, 104, 7))
+>values : Symbol(Vector.values, Decl(operatorOverloading.ts, 94, 16))
+>i : Symbol(i, Decl(operatorOverloading.ts, 105, 36))
+    }
+}
+
+// Usage examples - should be transformed to method calls
+const p1 = new Point(1, 2);
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+const p2 = new Point(3, 4);
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+// Binary arithmetic operators
+const p3 = p1 + p2;        // Should become: p1.add(p2)
+>p3 : Symbol(p3, Decl(operatorOverloading.ts, 114, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+const p4 = p1 - p2;        // Should become: p1.sub(p2)
+>p4 : Symbol(p4, Decl(operatorOverloading.ts, 115, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+const p5 = p1 * p2;        // Should become: p1.mul(p2)
+>p5 : Symbol(p5, Decl(operatorOverloading.ts, 116, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+const p6 = p1 / p2;        // Should become: p1.div(p2)
+>p6 : Symbol(p6, Decl(operatorOverloading.ts, 117, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+const p7 = p1 % p2;        // Should become: p1.mod(p2)
+>p7 : Symbol(p7, Decl(operatorOverloading.ts, 118, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+// Mixed type operations
+const p8 = p1 + 5;         // Should become: p1.add(5)
+>p8 : Symbol(p8, Decl(operatorOverloading.ts, 121, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+
+const p9 = p1 * 2;         // Should become: p1.mul(2)
+>p9 : Symbol(p9, Decl(operatorOverloading.ts, 122, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+
+const p10 = 10 - p1;       // Should become: p1.rsub(10)
+>p10 : Symbol(p10, Decl(operatorOverloading.ts, 123, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+
+// Unary operators
+const p11 = !p1;           // Should become: p1.not()
+>p11 : Symbol(p11, Decl(operatorOverloading.ts, 126, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+
+// Comparison operators
+const isEqual = p1 == p2;   // Should become: p1.eq(p2)
+>isEqual : Symbol(isEqual, Decl(operatorOverloading.ts, 129, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+const isNotEqual = p1 != p2; // Should become: p1.ne(p2)
+>isNotEqual : Symbol(isNotEqual, Decl(operatorOverloading.ts, 130, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+const isLess = p1 < p2;     // Should become: p1.lt(p2)
+>isLess : Symbol(isLess, Decl(operatorOverloading.ts, 131, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+const isLessEq = p1 <= p2;  // Should become: p1.le(p2)
+>isLessEq : Symbol(isLessEq, Decl(operatorOverloading.ts, 132, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+const isGreater = p1 > p2;  // Should become: p1.gt(p2)
+>isGreater : Symbol(isGreater, Decl(operatorOverloading.ts, 133, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+const isGreaterEq = p1 >= p2; // Should become: p1.ge(p2)
+>isGreaterEq : Symbol(isGreaterEq, Decl(operatorOverloading.ts, 134, 5))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+// Compound assignment operators
+let p12 = new Point(0, 0);
+>p12 : Symbol(p12, Decl(operatorOverloading.ts, 137, 3))
+>Point : Symbol(Point, Decl(operatorOverloading.ts, 5, 1))
+
+p12 += p1;                 // Should become: p12 = p12.add(p1)
+>p12 : Symbol(p12, Decl(operatorOverloading.ts, 137, 3))
+>p1 : Symbol(p1, Decl(operatorOverloading.ts, 110, 5))
+
+p12 -= p2;                 // Should become: p12 = p12.sub(p2)
+>p12 : Symbol(p12, Decl(operatorOverloading.ts, 137, 3))
+>p2 : Symbol(p2, Decl(operatorOverloading.ts, 111, 5))
+
+p12 *= 3;                  // Should become: p12 = p12.mul(3)
+>p12 : Symbol(p12, Decl(operatorOverloading.ts, 137, 3))
+
+p12 /= 2;                  // Should become: p12 = p12.div(2)
+>p12 : Symbol(p12, Decl(operatorOverloading.ts, 137, 3))
+
+// Vector operations
+const v1 = new Vector([1, 2, 3]);
+>v1 : Symbol(v1, Decl(operatorOverloading.ts, 144, 5))
+>Vector : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+
+const v2 = new Vector([4, 5, 6]);
+>v2 : Symbol(v2, Decl(operatorOverloading.ts, 145, 5))
+>Vector : Symbol(Vector, Decl(operatorOverloading.ts, 90, 1))
+
+const v3 = v1 + v2;        // Should become: v1.add(v2)
+>v3 : Symbol(v3, Decl(operatorOverloading.ts, 146, 5))
+>v1 : Symbol(v1, Decl(operatorOverloading.ts, 144, 5))
+>v2 : Symbol(v2, Decl(operatorOverloading.ts, 145, 5))
+
+const v4 = v1 * 2;         // Should become: v1.mul(2)
+>v4 : Symbol(v4, Decl(operatorOverloading.ts, 147, 5))
+>v1 : Symbol(v1, Decl(operatorOverloading.ts, 144, 5))
+
+const vectorsEqual = v1 == v2; // Should become: v1.eq(v2)
+>vectorsEqual : Symbol(vectorsEqual, Decl(operatorOverloading.ts, 148, 5))
+>v1 : Symbol(v1, Decl(operatorOverloading.ts, 144, 5))
+>v2 : Symbol(v2, Decl(operatorOverloading.ts, 145, 5))
+
