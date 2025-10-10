@@ -1,4 +1,3 @@
-
 name: Auto Merge Upstream and Publish Operators
 
 on:
@@ -31,7 +30,7 @@ jobs:
 
       - name: Push merged changes to main
         run: git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/adrianstephens/TypeScript.git HEAD:main
-          
+
       - name: Merge operators into main
         run: git merge origin/operators
 
