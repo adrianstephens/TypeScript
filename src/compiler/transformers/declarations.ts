@@ -1527,6 +1527,13 @@ export function transformDeclarations(context: TransformationContext): Transform
 
                     return [cleanDeclaration, namespaceDeclaration, exportDefaultDeclaration];
                 }
+                else if (clean && options.functionOverloadDispatch) {
+                    if ((input.symbol.declarations?.filter(decl => isFunctionDeclaration(decl) && decl.body).length ?? 0) > 1) {
+                        const jsDoc = factory.createJSDocComment("@functionOverloadDispatch @see");
+                        return [jsDoc, clean];
+                    }
+                    return clean;
+                }
                 else {
                     return clean;
                 }

@@ -1,0 +1,266 @@
+//// [tests/cases/compiler/functionOverloadDispatch.ts] ////
+
+=== functionOverloadDispatch.ts ===
+// Test automatic function overload dispatch transformation
+
+// Basic function overloads with primitive types
+function processValue(value: string): string {
+>processValue : Symbol(processValue, Decl(functionOverloadDispatch.ts, 0, 0), Decl(functionOverloadDispatch.ts, 5, 1), Decl(functionOverloadDispatch.ts, 9, 1))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 3, 22))
+
+    return "String: " + value;
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 3, 22))
+}
+
+function processValue(value: number): string {
+>processValue : Symbol(processValue, Decl(functionOverloadDispatch.ts, 0, 0), Decl(functionOverloadDispatch.ts, 5, 1), Decl(functionOverloadDispatch.ts, 9, 1))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 7, 22))
+
+    return "Number: " + value;
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 7, 22))
+}
+
+function processValue(value: boolean): string {
+>processValue : Symbol(processValue, Decl(functionOverloadDispatch.ts, 0, 0), Decl(functionOverloadDispatch.ts, 5, 1), Decl(functionOverloadDispatch.ts, 9, 1))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 11, 22))
+
+    return "Boolean: " + value;
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 11, 22))
+}
+
+// Array type overloads
+function handleArray(items: string[]): string {
+>handleArray : Symbol(handleArray, Decl(functionOverloadDispatch.ts, 13, 1), Decl(functionOverloadDispatch.ts, 18, 1), Decl(functionOverloadDispatch.ts, 22, 1))
+>items : Symbol(items, Decl(functionOverloadDispatch.ts, 16, 21))
+
+    return "Strings: " + items.join(", ");
+>items.join : Symbol(Array.join, Decl(lib.es5.d.ts, --, --))
+>items : Symbol(items, Decl(functionOverloadDispatch.ts, 16, 21))
+>join : Symbol(Array.join, Decl(lib.es5.d.ts, --, --))
+}
+
+function handleArray(items: number[]): string {
+>handleArray : Symbol(handleArray, Decl(functionOverloadDispatch.ts, 13, 1), Decl(functionOverloadDispatch.ts, 18, 1), Decl(functionOverloadDispatch.ts, 22, 1))
+>items : Symbol(items, Decl(functionOverloadDispatch.ts, 20, 21))
+
+    return "Numbers: " + items.map(n => n.toString()).join(", ");
+>items.map(n => n.toString()).join : Symbol(Array.join, Decl(lib.es5.d.ts, --, --))
+>items.map : Symbol(Array.map, Decl(lib.es5.d.ts, --, --))
+>items : Symbol(items, Decl(functionOverloadDispatch.ts, 20, 21))
+>map : Symbol(Array.map, Decl(lib.es5.d.ts, --, --))
+>n : Symbol(n, Decl(functionOverloadDispatch.ts, 21, 35))
+>n.toString : Symbol(Number.toString, Decl(lib.es5.d.ts, --, --))
+>n : Symbol(n, Decl(functionOverloadDispatch.ts, 21, 35))
+>toString : Symbol(Number.toString, Decl(lib.es5.d.ts, --, --))
+>join : Symbol(Array.join, Decl(lib.es5.d.ts, --, --))
+}
+
+function handleArray(items: boolean[]): string {
+>handleArray : Symbol(handleArray, Decl(functionOverloadDispatch.ts, 13, 1), Decl(functionOverloadDispatch.ts, 18, 1), Decl(functionOverloadDispatch.ts, 22, 1))
+>items : Symbol(items, Decl(functionOverloadDispatch.ts, 24, 21))
+
+    return "Booleans: " + items.map(b => b.toString()).join(", ");
+>items.map(b => b.toString()).join : Symbol(Array.join, Decl(lib.es5.d.ts, --, --))
+>items.map : Symbol(Array.map, Decl(lib.es5.d.ts, --, --))
+>items : Symbol(items, Decl(functionOverloadDispatch.ts, 24, 21))
+>map : Symbol(Array.map, Decl(lib.es5.d.ts, --, --))
+>b : Symbol(b, Decl(functionOverloadDispatch.ts, 25, 36))
+>b.toString : Symbol(Object.toString, Decl(lib.es5.d.ts, --, --))
+>b : Symbol(b, Decl(functionOverloadDispatch.ts, 25, 36))
+>toString : Symbol(Object.toString, Decl(lib.es5.d.ts, --, --))
+>join : Symbol(Array.join, Decl(lib.es5.d.ts, --, --))
+}
+
+// Interface-based overloads
+interface User {
+>User : Symbol(User, Decl(functionOverloadDispatch.ts, 26, 1))
+
+    name: string;
+>name : Symbol(User.name, Decl(functionOverloadDispatch.ts, 29, 16))
+}
+
+interface Product {
+>Product : Symbol(Product, Decl(functionOverloadDispatch.ts, 31, 1))
+
+    id: number;
+>id : Symbol(Product.id, Decl(functionOverloadDispatch.ts, 33, 19))
+
+    price: number;
+>price : Symbol(Product.price, Decl(functionOverloadDispatch.ts, 34, 15))
+}
+
+function transform(obj: User): string {
+>transform : Symbol(transform, Decl(functionOverloadDispatch.ts, 36, 1), Decl(functionOverloadDispatch.ts, 40, 1))
+>obj : Symbol(obj, Decl(functionOverloadDispatch.ts, 38, 19))
+>User : Symbol(User, Decl(functionOverloadDispatch.ts, 26, 1))
+
+    return `User: ${obj.name}`;
+>obj.name : Symbol(User.name, Decl(functionOverloadDispatch.ts, 29, 16))
+>obj : Symbol(obj, Decl(functionOverloadDispatch.ts, 38, 19))
+>name : Symbol(User.name, Decl(functionOverloadDispatch.ts, 29, 16))
+}
+
+function transform(obj: Product): string {
+>transform : Symbol(transform, Decl(functionOverloadDispatch.ts, 36, 1), Decl(functionOverloadDispatch.ts, 40, 1))
+>obj : Symbol(obj, Decl(functionOverloadDispatch.ts, 42, 19))
+>Product : Symbol(Product, Decl(functionOverloadDispatch.ts, 31, 1))
+
+    return `Product #${obj.id}: $${obj.price}`;
+>obj.id : Symbol(Product.id, Decl(functionOverloadDispatch.ts, 33, 19))
+>obj : Symbol(obj, Decl(functionOverloadDispatch.ts, 42, 19))
+>id : Symbol(Product.id, Decl(functionOverloadDispatch.ts, 33, 19))
+>obj.price : Symbol(Product.price, Decl(functionOverloadDispatch.ts, 34, 15))
+>obj : Symbol(obj, Decl(functionOverloadDispatch.ts, 42, 19))
+>price : Symbol(Product.price, Decl(functionOverloadDispatch.ts, 34, 15))
+}
+
+// Class method overloads
+class DataProcessor {
+>DataProcessor : Symbol(DataProcessor, Decl(functionOverloadDispatch.ts, 44, 1))
+
+    constructor(public prefix: string) {}
+>prefix : Symbol(DataProcessor.prefix, Decl(functionOverloadDispatch.ts, 48, 16))
+    
+    process(value: string): string {
+>process : Symbol(DataProcessor.process, Decl(functionOverloadDispatch.ts, 48, 41), Decl(functionOverloadDispatch.ts, 52, 5), Decl(functionOverloadDispatch.ts, 56, 5))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 50, 12))
+
+        return this.prefix + "String: " + value;
+>this.prefix : Symbol(DataProcessor.prefix, Decl(functionOverloadDispatch.ts, 48, 16))
+>this : Symbol(DataProcessor, Decl(functionOverloadDispatch.ts, 44, 1))
+>prefix : Symbol(DataProcessor.prefix, Decl(functionOverloadDispatch.ts, 48, 16))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 50, 12))
+    }
+
+    process(value: number): string {
+>process : Symbol(DataProcessor.process, Decl(functionOverloadDispatch.ts, 48, 41), Decl(functionOverloadDispatch.ts, 52, 5), Decl(functionOverloadDispatch.ts, 56, 5))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 54, 12))
+
+        return this.prefix + "Number: " + value;
+>this.prefix : Symbol(DataProcessor.prefix, Decl(functionOverloadDispatch.ts, 48, 16))
+>this : Symbol(DataProcessor, Decl(functionOverloadDispatch.ts, 44, 1))
+>prefix : Symbol(DataProcessor.prefix, Decl(functionOverloadDispatch.ts, 48, 16))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 54, 12))
+    }
+
+    process(value: boolean): string {
+>process : Symbol(DataProcessor.process, Decl(functionOverloadDispatch.ts, 48, 41), Decl(functionOverloadDispatch.ts, 52, 5), Decl(functionOverloadDispatch.ts, 56, 5))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 58, 12))
+
+        return this.prefix + "Boolean: " + value;
+>this.prefix : Symbol(DataProcessor.prefix, Decl(functionOverloadDispatch.ts, 48, 16))
+>this : Symbol(DataProcessor, Decl(functionOverloadDispatch.ts, 44, 1))
+>prefix : Symbol(DataProcessor.prefix, Decl(functionOverloadDispatch.ts, 48, 16))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 58, 12))
+    }
+}
+
+// Generic function overloads
+function convert(value: string): number {
+>convert : Symbol(convert, Decl(functionOverloadDispatch.ts, 61, 1), Decl(functionOverloadDispatch.ts, 66, 1), Decl(functionOverloadDispatch.ts, 70, 1))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 64, 17))
+
+    return value.length;
+>value.length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 64, 17))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+}
+
+function convert(value: number): string {
+>convert : Symbol(convert, Decl(functionOverloadDispatch.ts, 61, 1), Decl(functionOverloadDispatch.ts, 66, 1), Decl(functionOverloadDispatch.ts, 70, 1))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 68, 17))
+
+    return value.toString();
+>value.toString : Symbol(Number.toString, Decl(lib.es5.d.ts, --, --))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 68, 17))
+>toString : Symbol(Number.toString, Decl(lib.es5.d.ts, --, --))
+}
+
+function convert(value: boolean): number {
+>convert : Symbol(convert, Decl(functionOverloadDispatch.ts, 61, 1), Decl(functionOverloadDispatch.ts, 66, 1), Decl(functionOverloadDispatch.ts, 70, 1))
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 72, 17))
+
+    return value ? 1 : 0;
+>value : Symbol(value, Decl(functionOverloadDispatch.ts, 72, 17))
+}
+
+// Usage examples - should be automatically dispatched to specific implementations
+const result1 = processValue("hello");
+>result1 : Symbol(result1, Decl(functionOverloadDispatch.ts, 77, 5))
+>processValue : Symbol(processValue, Decl(functionOverloadDispatch.ts, 0, 0), Decl(functionOverloadDispatch.ts, 5, 1), Decl(functionOverloadDispatch.ts, 9, 1))
+
+const result2 = processValue(42);
+>result2 : Symbol(result2, Decl(functionOverloadDispatch.ts, 78, 5))
+>processValue : Symbol(processValue, Decl(functionOverloadDispatch.ts, 0, 0), Decl(functionOverloadDispatch.ts, 5, 1), Decl(functionOverloadDispatch.ts, 9, 1))
+
+const result3 = processValue(true);
+>result3 : Symbol(result3, Decl(functionOverloadDispatch.ts, 79, 5))
+>processValue : Symbol(processValue, Decl(functionOverloadDispatch.ts, 0, 0), Decl(functionOverloadDispatch.ts, 5, 1), Decl(functionOverloadDispatch.ts, 9, 1))
+
+const arrayResult1 = handleArray(["a", "b", "c"]);
+>arrayResult1 : Symbol(arrayResult1, Decl(functionOverloadDispatch.ts, 81, 5))
+>handleArray : Symbol(handleArray, Decl(functionOverloadDispatch.ts, 13, 1), Decl(functionOverloadDispatch.ts, 18, 1), Decl(functionOverloadDispatch.ts, 22, 1))
+
+const arrayResult2 = handleArray([1, 2, 3]);
+>arrayResult2 : Symbol(arrayResult2, Decl(functionOverloadDispatch.ts, 82, 5))
+>handleArray : Symbol(handleArray, Decl(functionOverloadDispatch.ts, 13, 1), Decl(functionOverloadDispatch.ts, 18, 1), Decl(functionOverloadDispatch.ts, 22, 1))
+
+const arrayResult3 = handleArray([true, false, true]);
+>arrayResult3 : Symbol(arrayResult3, Decl(functionOverloadDispatch.ts, 83, 5))
+>handleArray : Symbol(handleArray, Decl(functionOverloadDispatch.ts, 13, 1), Decl(functionOverloadDispatch.ts, 18, 1), Decl(functionOverloadDispatch.ts, 22, 1))
+
+const user: User = { name: "Alice" };
+>user : Symbol(user, Decl(functionOverloadDispatch.ts, 85, 5))
+>User : Symbol(User, Decl(functionOverloadDispatch.ts, 26, 1))
+>name : Symbol(name, Decl(functionOverloadDispatch.ts, 85, 20))
+
+const product: Product = { id: 123, price: 99.99 };
+>product : Symbol(product, Decl(functionOverloadDispatch.ts, 86, 5))
+>Product : Symbol(Product, Decl(functionOverloadDispatch.ts, 31, 1))
+>id : Symbol(id, Decl(functionOverloadDispatch.ts, 86, 26))
+>price : Symbol(price, Decl(functionOverloadDispatch.ts, 86, 35))
+
+const userResult = transform(user);
+>userResult : Symbol(userResult, Decl(functionOverloadDispatch.ts, 87, 5))
+>transform : Symbol(transform, Decl(functionOverloadDispatch.ts, 36, 1), Decl(functionOverloadDispatch.ts, 40, 1))
+>user : Symbol(user, Decl(functionOverloadDispatch.ts, 85, 5))
+
+const productResult = transform(product);
+>productResult : Symbol(productResult, Decl(functionOverloadDispatch.ts, 88, 5))
+>transform : Symbol(transform, Decl(functionOverloadDispatch.ts, 36, 1), Decl(functionOverloadDispatch.ts, 40, 1))
+>product : Symbol(product, Decl(functionOverloadDispatch.ts, 86, 5))
+
+const processor = new DataProcessor("Processed: ");
+>processor : Symbol(processor, Decl(functionOverloadDispatch.ts, 90, 5))
+>DataProcessor : Symbol(DataProcessor, Decl(functionOverloadDispatch.ts, 44, 1))
+
+const methodResult1 = processor.process("test");
+>methodResult1 : Symbol(methodResult1, Decl(functionOverloadDispatch.ts, 91, 5))
+>processor.process : Symbol(DataProcessor.process, Decl(functionOverloadDispatch.ts, 48, 41), Decl(functionOverloadDispatch.ts, 52, 5), Decl(functionOverloadDispatch.ts, 56, 5))
+>processor : Symbol(processor, Decl(functionOverloadDispatch.ts, 90, 5))
+>process : Symbol(DataProcessor.process, Decl(functionOverloadDispatch.ts, 48, 41), Decl(functionOverloadDispatch.ts, 52, 5), Decl(functionOverloadDispatch.ts, 56, 5))
+
+const methodResult2 = processor.process(100);
+>methodResult2 : Symbol(methodResult2, Decl(functionOverloadDispatch.ts, 92, 5))
+>processor.process : Symbol(DataProcessor.process, Decl(functionOverloadDispatch.ts, 48, 41), Decl(functionOverloadDispatch.ts, 52, 5), Decl(functionOverloadDispatch.ts, 56, 5))
+>processor : Symbol(processor, Decl(functionOverloadDispatch.ts, 90, 5))
+>process : Symbol(DataProcessor.process, Decl(functionOverloadDispatch.ts, 48, 41), Decl(functionOverloadDispatch.ts, 52, 5), Decl(functionOverloadDispatch.ts, 56, 5))
+
+const methodResult3 = processor.process(false);
+>methodResult3 : Symbol(methodResult3, Decl(functionOverloadDispatch.ts, 93, 5))
+>processor.process : Symbol(DataProcessor.process, Decl(functionOverloadDispatch.ts, 48, 41), Decl(functionOverloadDispatch.ts, 52, 5), Decl(functionOverloadDispatch.ts, 56, 5))
+>processor : Symbol(processor, Decl(functionOverloadDispatch.ts, 90, 5))
+>process : Symbol(DataProcessor.process, Decl(functionOverloadDispatch.ts, 48, 41), Decl(functionOverloadDispatch.ts, 52, 5), Decl(functionOverloadDispatch.ts, 56, 5))
+
+const converted1 = convert("typescript");
+>converted1 : Symbol(converted1, Decl(functionOverloadDispatch.ts, 95, 5))
+>convert : Symbol(convert, Decl(functionOverloadDispatch.ts, 61, 1), Decl(functionOverloadDispatch.ts, 66, 1), Decl(functionOverloadDispatch.ts, 70, 1))
+
+const converted2 = convert(42);
+>converted2 : Symbol(converted2, Decl(functionOverloadDispatch.ts, 96, 5))
+>convert : Symbol(convert, Decl(functionOverloadDispatch.ts, 61, 1), Decl(functionOverloadDispatch.ts, 66, 1), Decl(functionOverloadDispatch.ts, 70, 1))
+
+const converted3 = convert(true);
+>converted3 : Symbol(converted3, Decl(functionOverloadDispatch.ts, 97, 5))
+>convert : Symbol(convert, Decl(functionOverloadDispatch.ts, 61, 1), Decl(functionOverloadDispatch.ts, 66, 1), Decl(functionOverloadDispatch.ts, 70, 1))
+
