@@ -49,6 +49,13 @@
             "problemMatcher": [
                 "$tsc"
             ]
+        },
+        {
+            "label": "hereby: build-tsc",
+            "type": "shell",
+            "command": "hereby",
+            "args": ["tsc"],
+            "group": "build"
         }
     ]
 }

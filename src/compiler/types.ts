@@ -7487,6 +7487,8 @@ export interface CompilerOptions {
     /** @internal */
     noDtsResolution?: boolean;
     noUncheckedIndexedAccess?: boolean;
+    operatorOverloading?: boolean;
+    functionOverloadDispatch?: boolean;
     /** @deprecated */
     out?: string;
     outDir?: string;
