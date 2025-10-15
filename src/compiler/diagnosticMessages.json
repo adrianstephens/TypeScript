@@ -8331,6 +8331,14 @@
         "category": "Message",
         "code": 95197
     },
+    "Enable operator overloading for user-defined types": {
+        "category": "Message",
+        "code": 96000
+    },
+    "Enable compile-time function overload dispatch": {
+        "category": "Message",
+        "code": 96001
+    },
 
     "No value exists in scope for the shorthand property '{0}'. Either declare one or provide an initializer.": {
         "category": "Error",

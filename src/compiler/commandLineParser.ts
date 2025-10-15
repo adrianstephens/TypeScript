@@ -1652,6 +1652,20 @@ const commandOptionsWithoutBuild: CommandLineOption[] = [
         type: "string",
         defaultValueDescription: undefined,
     },
+    {
+        name: "operatorOverloading",
+        type: "boolean",
+        category: Diagnostics.Language_and_Environment, // or whichever category fits
+        description: Diagnostics.Enable_operator_overloading_for_user_defined_types,
+        defaultValueDescription: false,
+    },
+    {
+        name: "functionOverloadDispatch",
+        type: "boolean",
+        category: Diagnostics.Language_and_Environment,
+        description: Diagnostics.Enable_compile_time_function_overload_dispatch,
+        defaultValueDescription: false,
+    }
 ];
 
 // Do not delete this without updating the website's tsconfig generation.

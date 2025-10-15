@@ -1144,6 +1144,8 @@ import {
 import * as moduleSpecifiers from "./_namespaces/ts.moduleSpecifiers.js";
 import * as performance from "./_namespaces/ts.performance.js";
 
+import {checkBinaryOperatorOverload, checkComparisonOperatorOverload, checkPrefixUnaryOperatorOverload, checkPostfixUnaryOperatorOverload} from "./transformers/operatorOverloading.js";
+
 const ambientModuleSymbolRegex = /^".+"$/;
 const anon = "(anonymous)" as __String & string;
 
@@ -16286,13 +16288,18 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
     function getSignaturesOfSymbol(symbol: Symbol | undefined): Signature[] {
         if (!symbol || !symbol.declarations) return emptyArray;
         const result: Signature[] = [];
+        const useImplementations = compilerOptions.functionOverloadDispatch && symbol.declarations.filter(d => 
+            (isFunctionDeclaration(d) && d.body) || (isMethodDeclaration(d) && d.body) || getJSDocTags(d).some(tag => tag.tagName.escapedText === "functionOverloadDispatch")
+        ).length > 1;
+
         for (let i = 0; i < symbol.declarations.length; i++) {
             const decl = symbol.declarations[i];
             if (!isFunctionLike(decl)) continue;
             // Don't include signature if node is the implementation of an overloaded function. A node is considered
             // an implementation node if it has a body and the previous node is of the same kind and immediately
             // precedes the implementation node (i.e. has the same parent and ends where the implementation starts).
-            if (i > 0 && (decl as FunctionLikeDeclaration).body) {
+            // Exception: When functionOverloadDispatch is enabled and there are multiple implementations, include them all
+            if (!useImplementations && i > 0 && (decl as FunctionLikeDeclaration).body) {
                 const previous = symbol.declarations[i - 1];
                 if (decl.parent === previous.parent && decl.kind === previous.kind && decl.pos === previous.end) {
                     continue;
@@ -39888,6 +39895,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     }));
                 }
         }
+
+        const overloadType = compilerOptions.operatorOverloading && checkPrefixUnaryOperatorOverload(node.operator, operandType, checker);
+        if (overloadType) {
+            return overloadType;
+        }
+
         switch (node.operator) {
             case SyntaxKind.PlusToken:
             case SyntaxKind.MinusToken:
@@ -39930,6 +39943,12 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
         if (operandType === silentNeverType) {
             return silentNeverType;
         }
+
+        const overloadType = compilerOptions.operatorOverloading && checkPostfixUnaryOperatorOverload(node.operator, operandType, checker);
+        if (overloadType) {
+            return overloadType;
+        }
+
         const ok = checkArithmeticOperandType(
             node.operand,
             checkNonNullType(operandType, node.operand),
@@ -40656,6 +40675,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 rightType = checkNonNullType(rightType, right);
 
                 let suggestedOperator: PunctuationSyntaxKind | undefined;
+                let overloadType: Type | undefined;
+
                 // if a user tries to apply a bitwise operator to 2 boolean operands
                 // try and return them a helpful suggestion
                 if (
@@ -40665,6 +40686,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 ) {
                     error(errorNode || operatorToken, Diagnostics.The_0_operator_is_not_allowed_for_boolean_types_Consider_using_1_instead, tokenToString(operatorToken.kind), tokenToString(suggestedOperator));
                     return numberType;
+                }
+                else if (compilerOptions.operatorOverloading && (overloadType = checkBinaryOperatorOverload(operator, leftType, rightType, checker))) {
+                    checkAssignmentOperator(overloadType);
+                    return overloadType;
                 }
                 else {
                     // otherwise just check each operand separately and report errors as normal
@@ -40762,6 +40787,9 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     return resultType;
                 }
 
+                if (compilerOptions.operatorOverloading)
+                    resultType ??= checkBinaryOperatorOverload(operator, leftType, rightType, checker);
+
                 if (!resultType) {
                     // Types that have a reasonably good chance of being a valid operand type.
                     // If both types have an awaited type of one of these, we'll assume the user
@@ -40786,6 +40814,14 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                 if (checkForDisallowedESSymbolOperand(operator)) {
                     leftType = getBaseTypeOfLiteralTypeForComparison(checkNonNullType(leftType, left));
                     rightType = getBaseTypeOfLiteralTypeForComparison(checkNonNullType(rightType, right));
+
+                    let returnType: Type|undefined = booleanType;
+                    //if (compilerOptions.operatorOverloading) {
+                    //    const overloadType = checkComparisonOperatorOverload(operator, leftType, rightType, checker);
+                    //    if (overloadType)
+                    //        return overloadType;
+                    //}
+
                     reportOperatorErrorUnless((left, right) => {
                         if (isTypeAny(left) || isTypeAny(right)) {
                             return true;
@@ -40793,8 +40829,10 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         const leftAssignableToNumber = isTypeAssignableTo(left, numberOrBigIntType);
                         const rightAssignableToNumber = isTypeAssignableTo(right, numberOrBigIntType);
                         return leftAssignableToNumber && rightAssignableToNumber ||
-                            !leftAssignableToNumber && !rightAssignableToNumber && areTypesComparable(left, right);
+                            !leftAssignableToNumber && !rightAssignableToNumber && areTypesComparable(left, right)
+                            || !!compilerOptions.operatorOverloading && !!(returnType = checkComparisonOperatorOverload(operator, leftType, rightType, checker));
                     });
+                    return returnType;
                 }
                 return booleanType;
             case SyntaxKind.EqualsEqualsToken:
@@ -40814,6 +40852,11 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         error(errorNode, Diagnostics.This_condition_will_always_return_0_since_JavaScript_compares_objects_by_reference_not_value, eqType ? "false" : "true");
                     }
                     checkNaNEquality(errorNode, operator, left, right);
+                    if (compilerOptions.operatorOverloading) {
+                        const overloadType = checkComparisonOperatorOverload(operator, leftType, rightType, checker);
+                        if (overloadType)
+                            return overloadType;
+                    }
                     reportOperatorErrorUnless((left, right) => isTypeEqualityComparableTo(left, right) || isTypeEqualityComparableTo(right, left));
                 }
                 return booleanType;
@@ -43167,7 +43210,7 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                         if (isConstructor) {
                             multipleConstructorImplementation = true;
                         }
-                        else {
+                        else if (!compilerOptions.functionOverloadDispatch) {
                             duplicateFunctionDeclaration = true;
                         }
                     }
@@ -48939,7 +48982,8 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
                     if (exportedDeclarationsCount > 1) {
                         if (!isDuplicatedCommonJSExport(declarations)) {
                             for (const declaration of declarations!) {
-                                if (isNotOverload(declaration)) {
+                                // Allow duplicate exported functions when functionOverloadDispatch is enabled
+                                if (isNotOverload(declaration) && !compilerOptions.functionOverloadDispatch) {
                                     diagnostics.add(createDiagnosticForNode(declaration, Diagnostics.Cannot_redeclare_exported_variable_0, unescapeLeadingUnderscores(id)));
                                 }
                             }
@@ -50662,6 +50706,11 @@ export function createTypeChecker(host: TypeCheckerHost): TypeChecker {
             //       function foo(a: any) { // This is implementation of the overloads
             //           return a;
             //       }
+            if (compilerOptions.functionOverloadDispatch) {
+                // If there are multiple function implementations, do not treat any as an overload implementation
+                if (signaturesOfSymbol.filter(sig => sig.declaration && isFunctionDeclaration(sig.declaration) && sig.declaration.body).length > 1)
+                    return false;
+            }
             return signaturesOfSymbol.length > 1 ||
                 // If there is single signature for the symbol, it is overload if that signature isn't coming from the node
                 // e.g.: function foo(a: string): string;

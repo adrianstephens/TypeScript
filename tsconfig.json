@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "operatorOverloading": true,
+    "functionOverloadDispatch": true,
+    "target": "ES2020",
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "noEmit": false
+  },
+  "files": [
+    "tests\\cases\\compiler\\operatorOverloading.ts",
+    "tests\\cases\\compiler\\functionOverloadDispatch.ts",
+  ]
+}
