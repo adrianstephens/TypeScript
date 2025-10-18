@@ -2,7 +2,7 @@
     "name": "@isopodlabs/typescript",
     "author": "Microsoft Corp.",
     "homepage": "https://www.typescriptlang.org/",
-    "version": "6.0.0",
+    "version": "6.0.1-0",
     "license": "Apache-2.0",
     "description": "TypeScript is a language for application scale JavaScript development",
     "keywords": [
@@ -98,7 +98,9 @@
         "lint": "hereby lint",
         "knip": "hereby knip",
         "format": "dprint fmt",
-        "setup-hooks": "node scripts/link-hooks.mjs"
+        "setup-hooks": "node scripts/link-hooks.mjs",
+        "combine-branches": "node scripts/combine-branches.mjs operators rewrite-imports --auto-resolve-baselines",
+        "clean-branches": "node scripts/cleanup-temp-branches.mjs --switch-first"
     },
     "browser": {
         "fs": false,
